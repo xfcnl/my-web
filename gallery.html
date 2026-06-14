@@ -1,1425 +1,1672 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>画廊</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --glass-bg: rgba(255,255,255,0.18);
-  --glass-border: rgba(255,255,255,0.25);
-  --glass-shadow: 0 8px 32px rgba(0,0,0,0.08);
-  --text: #1d1d1f;
-  --text-secondary: rgba(0,0,0,0.5);
-  --overlay: rgba(0,0,0,0.6);
-  --radius: 16px;
-  --radius-sm: 10px;
-  --font: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-  --bg-color: #f5f5f7;
-  --bg-image: none;
-}
-
-body {
-  font-family: var(--font);
-  background-color: var(--bg-color);
-  background-image: var(--bg-image);
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  min-height: 100vh;
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
-  transition: background-color .4s;
-}
-
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
-
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-/* Header */
-.header {
-  position: sticky;
-  top: 16px;
-  z-index: 100;
-  margin: 16px 16px 0;
-  padding: 12px 20px;
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.header-title {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -.3px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.header-controls {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 50px;
-  border: none;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all .25s;
-  background: rgba(255,255,255,0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: var(--text);
-  font-family: var(--font);
-  white-space: nowrap;
-}
-
-.btn:hover {
-  background: rgba(255,255,255,0.5);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-}
-
-.btn:active { transform: translateY(0); }
-
-/* Preset trigger */
-.preset-wrap { position: relative; }
-
-.preset-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px 8px 16px;
-  border-radius: 50px;
-  border: none;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all .25s;
-  background: rgba(255,255,255,0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: var(--text);
-  font-family: var(--font);
-  white-space: nowrap;
-  max-width: 180px;
-}
-
-.preset-trigger:hover {
-  background: rgba(255,255,255,0.5);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-}
-
-.preset-trigger .arrow {
-  display: inline-flex;
-  align-items: center;
-  opacity: .5;
-  transition: transform .25s;
-  font-size: 14px;
-}
-
-.preset-trigger.open .arrow { transform: rotate(180deg); }
-
-.preset-trigger .label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Dropdown */
-.preset-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 240px;
-  background: rgba(255,255,255,0.75);
-  backdrop-filter: blur(40px) saturate(1.5);
-  -webkit-backdrop-filter: blur(40px) saturate(1.5);
-  border: 1px solid rgba(255,255,255,0.4);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.12);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-4px) scale(.96);
-  transition: all .3s cubic-bezier(.22,1,.36,1);
-  z-index: 200;
-  max-height: 380px;
-  overflow-y: auto;
-  padding: 4px;
-}
-
-.preset-dropdown.open {
-  opacity: 1;
-  pointer-events: all;
-  transform: translateY(0) scale(1);
-}
-
-.preset-dropdown .optgroup-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  padding: 8px 12px 4px;
-  opacity: .4;
-}
-
-.preset-dropdown .opt-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background .2s;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  color: var(--text);
-  font-family: var(--font);
-}
-
-.preset-dropdown .opt-item:hover { background: rgba(0,0,0,0.05); }
-
-.preset-dropdown .opt-item .icon {
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
-  font-size: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.preset-dropdown .opt-item .badge {
-  margin-left: auto;
-  font-size: 11px;
-  opacity: .4;
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-.preset-dropdown .divider {
-  height: 1px;
-  background: rgba(0,0,0,0.06);
-  margin: 4px 12px;
-}
-
-/* Panels */
-.panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(.92);
-  width: 360px;
-  max-width: calc(100vw - 32px);
-  padding: 24px;
-  border-radius: var(--radius);
-  z-index: 200;
-  opacity: 0;
-  pointer-events: none;
-  transition: all .35s cubic-bezier(.22,1,.36,1);
-}
-
-.panel.open {
-  opacity: 1;
-  pointer-events: all;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.panel h3 {
-  font-size: 17px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.panel label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: .3px;
-}
-
-.panel input, .panel select {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(0,0,0,0.08);
-  font-size: 14px;
-  font-family: var(--font);
-  background: rgba(255,255,255,0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--text);
-  outline: none;
-  transition: border .2s;
-  margin-bottom: 12px;
-}
-
-.panel input:focus { border-color: rgba(0,0,0,0.2); }
-
-.panel input[type="color"] {
-  width: 100%;
-  height: 44px;
-  border: none;
-  cursor: pointer;
-  background: none;
-  padding: 2px;
-}
-
-.panel input[type="file"] {
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.panel .hint {
-  font-size: 12px;
-  opacity: .4;
-  margin-top: -8px;
-  margin-bottom: 12px;
-}
-
-.bg-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.bg-row .btn { flex: 1; justify-content: center; }
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--overlay);
-  z-index: 199;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .35s;
-}
-
-.overlay.open { opacity: 1; pointer-events: all; }
-
-/* Preset management list */
-.preset-list {
-  max-height: 240px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-}
-
-.preset-list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.04);
-  font-size: 13px;
-  gap: 8px;
-}
-
-.preset-list-item:last-child { border-bottom: none; }
-
-.preset-list-item .p-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.preset-list-item .p-icon {
-  font-size: 18px;
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.preset-list-item .p-name {
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.preset-list-item .p-count {
-  opacity: .4;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.preset-list-item .p-del {
-  background: none;
-  border: none;
-  color: #ff3b30;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background .2s;
-  font-family: var(--font);
-  flex-shrink: 0;
-}
-
-.preset-list-item .p-del:hover { background: rgba(255,59,48,0.08); }
-
-.preset-list-item .p-lock {
-  opacity: .25;
-  font-size: 18px;
-  padding: 4px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Gallery */
-.gallery {
-  padding: 16px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.gallery-item {
-  position: relative;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  aspect-ratio: 1;
-  cursor: pointer;
-  transition: all .35s cubic-bezier(.22,1,.36,1);
-  background: var(--glass-bg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-}
-
-.gallery-item:hover {
-  transform: scale(1.03);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-}
-
-.gallery-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform .5s;
-}
-
-.gallery-item:hover img { transform: scale(1.08); }
-
-.gallery-item .img-error {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 12px;
-  opacity: .4;
-  background: rgba(0,0,0,0.03);
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Empty state */
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 80px 20px;
-  border-radius: var(--radius);
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px dashed rgba(255,255,255,0.3);
-}
-
-.empty-state svg {
-  width: 48px;
-  height: 48px;
-  opacity: .3;
-  margin-bottom: 12px;
-}
-
-.empty-state p {
-  font-size: 15px;
-  opacity: .5;
-  font-weight: 500;
-}
-
-/* Lightbox */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .35s;
-}
-
-.lightbox.open { opacity: 1; pointer-events: all; }
-
-.lightbox-bg {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-}
-
-.lightbox-content {
-  position: relative;
-  z-index: 1;
-  max-width: 90vw;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.lightbox-img-wrap {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-  max-width: 100%;
-  max-height: 80vh;
-  cursor: grab;
-  touch-action: none;
-}
-
-.lightbox-img-wrap.dragging { cursor: grabbing; }
-
-.lightbox-img-wrap img {
-  display: block;
-  max-width: 100%;
-  max-height: 80vh;
-  object-fit: contain;
-  transition: transform .2s ease;
-  transform-origin: 0 0;
-}
-
-.lightbox-img-wrap img.no-anim { transition: none; }
-
-.lightbox-caption {
-  margin-top: 12px;
-  font-size: 13px;
-  color: rgba(255,255,255,0.6);
-  font-weight: 500;
-}
-
-.lightbox-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: white;
-  font-size: 20px;
-  cursor: pointer;
-  transition: all .25s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-
-.lightbox-nav:hover {
-  background: rgba(255,255,255,0.25);
-  transform: translateY(-50%) scale(1.1);
-}
-
-.lightbox-nav.prev { left: 16px; }
-.lightbox-nav.next { right: 16px; }
-
-.lightbox-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  transition: all .25s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-
-.lightbox-close:hover {
-  background: rgba(255,255,255,0.25);
-  transform: scale(1.1);
-}
-
-/* Zoom controls */
-.lightbox-zoom {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 6px;
-  z-index: 2;
-}
-
-.lightbox-zoom button {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all .25s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lightbox-zoom button:hover {
-  background: rgba(255,255,255,0.25);
-  transform: scale(1.1);
-}
-
-.lightbox-zoom .zoom-level {
-  font-size: 11px;
-  color: rgba(255,255,255,0.5);
-  font-weight: 500;
-  min-width: 32px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Footer */
-.footer {
-  margin: 0 16px 16px;
-  padding: 12px 20px;
-  border-radius: var(--radius);
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.footer span { opacity: .7; }
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  padding: 10px 24px;
-  border-radius: 50px;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  z-index: 500;
-  opacity: 0;
-  transition: all .4s cubic-bezier(.22,1,.36,1);
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* Responsive */
-@media (min-width: 768px) {
-  .gallery {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    padding: 24px;
-  }
-  .header {
-    margin: 24px 24px 0;
-    padding: 16px 24px;
-  }
-  .header-title { font-size: 22px; }
-  .footer { margin: 0 24px 24px; }
-  .preset-trigger { max-width: 260px; }
-}
-
-@media (min-width: 1200px) {
-  .gallery { padding: 32px; }
-  .header { margin: 32px 32px 0; }
-  .footer { margin: 0 32px 32px; }
-}
-
-/* Skeleton */
-.skeleton {
-  background: linear-gradient(
-    110deg,
-    rgba(255,255,255,0.08) 30%,
-    rgba(255,255,255,0.22) 50%,
-    rgba(255,255,255,0.08) 70%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
-  border-radius: var(--radius-sm);
-  aspect-ratio: 1;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-
-
-</style>
-</head>
-<body>
-
-<header class="header glass">
-  <a href="/" class="header-title" style="text-decoration:none;color:inherit">
-    <i class="fa-regular fa-image" style="font-size:18px"></i>
-    画廊
-  </a>
-  <div class="header-controls">
-    <div class="preset-wrap">
-      <button class="preset-trigger" id="presetTrigger">
-        <span class="label" id="presetLabel">选择来源</span>
-        <span class="arrow"><i class="fa-solid fa-chevron-down"></i></span>
-      </button>
-      <div class="preset-dropdown" id="presetDropdown">
-        <div class="optgroup-label">预设</div>
-        <div id="presetList"></div>
-        <div class="divider" id="dividerActions"></div>
-        <button class="opt-item" data-action="folder">
-          <span class="icon"><i class="fa-solid fa-folder"></i></span> 选择文件夹…
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>画廊</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <script
+      defer
+      src="https://u.mikufans1.dpdns.org/script.js"
+      data-website-id="ce603ea7-0617-41cb-95fe-493154cc18a3"
+    ></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --glass-bg: rgba(255, 255, 255, 0.18);
+        --glass-border: rgba(255, 255, 255, 0.25);
+        --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        --text: #1d1d1f;
+        --text-secondary: rgba(0, 0, 0, 0.5);
+        --overlay: rgba(0, 0, 0, 0.6);
+        --radius: 16px;
+        --radius-sm: 10px;
+        --font: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+        --bg-color: #f5f5f7;
+        --bg-image: none;
+      }
+
+      body {
+        font-family: var(--font);
+        background-color: var(--bg-color);
+        background-image: var(--bg-image);
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        min-height: 100vh;
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        transition: background-color 0.4s;
+      }
+
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 3px;
+      }
+
+      .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px) saturate(1.4);
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+      }
+
+      /* Header */
+      .header {
+        position: sticky;
+        top: 16px;
+        z-index: 100;
+        margin: 16px 16px 0;
+        padding: 12px 20px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .header-title {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .header-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 50px;
+        border: none;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s;
+        background: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: var(--text);
+        font-family: var(--font);
+        white-space: nowrap;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      /* Preset trigger */
+      .preset-wrap {
+        position: relative;
+      }
+
+      .preset-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px 8px 16px;
+        border-radius: 50px;
+        border: none;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s;
+        background: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: var(--text);
+        font-family: var(--font);
+        white-space: nowrap;
+        max-width: 180px;
+      }
+
+      .preset-trigger:hover {
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      }
+
+      .preset-trigger .arrow {
+        display: inline-flex;
+        align-items: center;
+        opacity: 0.5;
+        transition: transform 0.25s;
+        font-size: 14px;
+      }
+
+      .preset-trigger.open .arrow {
+        transform: rotate(180deg);
+      }
+
+      .preset-trigger .label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* Dropdown */
+      .preset-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        min-width: 240px;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(40px) saturate(1.5);
+        -webkit-backdrop-filter: blur(40px) saturate(1.5);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: var(--radius-sm);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-4px) scale(0.96);
+        transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        z-index: 200;
+        max-height: 380px;
+        overflow-y: auto;
+        padding: 4px;
+      }
+
+      .preset-dropdown.open {
+        opacity: 1;
+        pointer-events: all;
+        transform: translateY(0) scale(1);
+      }
+
+      .preset-dropdown .optgroup-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 8px 12px 4px;
+        opacity: 0.4;
+      }
+
+      .preset-dropdown .opt-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        color: var(--text);
+        font-family: var(--font);
+      }
+
+      .preset-dropdown .opt-item:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      .preset-dropdown .opt-item .icon {
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+        font-size: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .preset-dropdown .opt-item .badge {
+        margin-left: auto;
+        font-size: 11px;
+        opacity: 0.4;
+        font-weight: 400;
+        white-space: nowrap;
+      }
+
+      .preset-dropdown .divider {
+        height: 1px;
+        background: rgba(0, 0, 0, 0.06);
+        margin: 4px 12px;
+      }
+
+      /* Panels */
+      .panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.92);
+        width: 360px;
+        max-width: calc(100vw - 32px);
+        padding: 24px;
+        border-radius: var(--radius);
+        z-index: 200;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .panel.open {
+        opacity: 1;
+        pointer-events: all;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .panel h3 {
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .panel label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .panel input,
+      .panel select {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        font-size: 14px;
+        font-family: var(--font);
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: var(--text);
+        outline: none;
+        transition: border 0.2s;
+        margin-bottom: 12px;
+      }
+
+      .panel input:focus {
+        border-color: rgba(0, 0, 0, 0.2);
+      }
+
+      .panel input[type="color"] {
+        width: 100%;
+        height: 44px;
+        border: none;
+        cursor: pointer;
+        background: none;
+        padding: 2px;
+      }
+
+      .panel input[type="file"] {
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+
+      .panel .hint {
+        font-size: 12px;
+        opacity: 0.4;
+        margin-top: -8px;
+        margin-bottom: 12px;
+      }
+
+      .bg-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .bg-row .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--overlay);
+        z-index: 199;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s;
+      }
+
+      .overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      /* Preset management list */
+      .preset-list {
+        max-height: 240px;
+        overflow-y: auto;
+        margin-bottom: 12px;
+      }
+
+      .preset-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        font-size: 13px;
+        gap: 8px;
+      }
+
+      .preset-list-item:last-child {
+        border-bottom: none;
+      }
+
+      .preset-list-item .p-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .preset-list-item .p-icon {
+        font-size: 18px;
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .preset-list-item .p-name {
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .preset-list-item .p-count {
+        opacity: 0.4;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .preset-list-item .p-del {
+        background: none;
+        border: none;
+        color: #ff3b30;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: background 0.2s;
+        font-family: var(--font);
+        flex-shrink: 0;
+      }
+
+      .preset-list-item .p-del:hover {
+        background: rgba(255, 59, 48, 0.08);
+      }
+
+      .preset-list-item .p-lock {
+        opacity: 0.25;
+        font-size: 18px;
+        padding: 4px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      /* Gallery */
+      .gallery {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .gallery-item {
+        position: relative;
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        aspect-ratio: 1;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        background: var(--glass-bg);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .gallery-item:hover {
+        transform: scale(1.03);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.08);
+      }
+
+      .gallery-item .img-error {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        font-size: 12px;
+        opacity: 0.4;
+        background: rgba(0, 0, 0, 0.03);
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      /* Empty state */
+      .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 80px 20px;
+        border-radius: var(--radius);
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px) saturate(1.4);
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
+        border: 1px dashed rgba(255, 255, 255, 0.3);
+      }
+
+      .empty-state svg {
+        width: 48px;
+        height: 48px;
+        opacity: 0.3;
+        margin-bottom: 12px;
+      }
+
+      .empty-state p {
+        font-size: 15px;
+        opacity: 0.5;
+        font-weight: 500;
+      }
+
+      /* Lightbox */
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s;
+      }
+
+      .lightbox.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .lightbox-bg {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+      }
+
+      .lightbox-content {
+        position: relative;
+        z-index: 1;
+        max-width: 90vw;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .lightbox-img-wrap {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--radius-sm);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+        max-width: 100%;
+        max-height: 80vh;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .lightbox-img-wrap.dragging {
+        cursor: grabbing;
+      }
+
+      .lightbox-img-wrap img {
+        display: block;
+        max-width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+        transition: transform 0.2s ease;
+        transform-origin: 0 0;
+      }
+
+      .lightbox-img-wrap img.no-anim {
+        transition: none;
+      }
+
+      .lightbox-caption {
+        margin-top: 12px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+      }
+
+      .lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.25s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+      }
+
+      .lightbox-nav:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-50%) scale(1.1);
+      }
+
+      .lightbox-nav.prev {
+        left: 16px;
+      }
+      .lightbox-nav.next {
+        right: 16px;
+      }
+
+      .lightbox-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.25s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+      }
+
+      .lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.1);
+      }
+
+      /* Zoom controls */
+      .lightbox-zoom {
+        position: absolute;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        z-index: 2;
+      }
+
+      .lightbox-zoom button {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.25s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .lightbox-zoom button:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.1);
+      }
+
+      .lightbox-zoom .zoom-level {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+        min-width: 32px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Footer */
+      .footer {
+        margin: 0 16px 16px;
+        padding: 12px 20px;
+        border-radius: var(--radius);
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .footer span {
+        opacity: 0.7;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        padding: 10px 24px;
+        border-radius: 50px;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        color: white;
+        font-size: 13px;
+        font-weight: 500;
+        z-index: 500;
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+        white-space: nowrap;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Responsive */
+      @media (min-width: 768px) {
+        .gallery {
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          padding: 24px;
+        }
+        .header {
+          margin: 24px 24px 0;
+          padding: 16px 24px;
+        }
+        .header-title {
+          font-size: 22px;
+        }
+        .footer {
+          margin: 0 24px 24px;
+        }
+        .preset-trigger {
+          max-width: 260px;
+        }
+      }
+
+      @media (min-width: 1200px) {
+        .gallery {
+          padding: 32px;
+        }
+        .header {
+          margin: 32px 32px 0;
+        }
+        .footer {
+          margin: 0 32px 32px;
+        }
+      }
+
+      /* Skeleton */
+      .skeleton {
+        background: linear-gradient(
+          110deg,
+          rgba(255, 255, 255, 0.08) 30%,
+          rgba(255, 255, 255, 0.22) 50%,
+          rgba(255, 255, 255, 0.08) 70%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.6s ease-in-out infinite;
+        border-radius: var(--radius-sm);
+        aspect-ratio: 1;
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header glass">
+      <a
+        href="/"
+        class="header-title"
+        style="text-decoration: none; color: inherit"
+      >
+        <i class="fa-regular fa-image" style="font-size: 18px"></i>
+        画廊
+      </a>
+      <div class="header-controls">
+        <div class="preset-wrap">
+          <button class="preset-trigger" id="presetTrigger">
+            <span class="label" id="presetLabel">选择来源</span>
+            <span class="arrow"><i class="fa-solid fa-chevron-down"></i></span>
+          </button>
+          <div class="preset-dropdown" id="presetDropdown">
+            <div class="optgroup-label">预设</div>
+            <div id="presetList"></div>
+            <div class="divider" id="dividerActions"></div>
+            <button class="opt-item" data-action="folder">
+              <span class="icon"><i class="fa-solid fa-folder"></i></span>
+              选择文件夹…
+            </button>
+            <button class="opt-item" data-action="github">
+              <span class="icon"><i class="fa-brands fa-github"></i></span>
+              GitHub 仓库…
+            </button>
+            <button class="opt-item" data-action="save">
+              <span class="icon"><i class="fa-solid fa-floppy-disk"></i></span>
+              保存为预设
+            </button>
+            <button class="opt-item" data-action="manage">
+              <span class="icon"><i class="fa-solid fa-gear"></i></span>
+              管理预设
+            </button>
+          </div>
+        </div>
+
+        <button class="btn" id="bgBtn" title="自定义背景">
+          <i class="fa-solid fa-palette" style="font-size: 16px"></i>
+          <span>背景</span>
         </button>
-        <button class="opt-item" data-action="github">
-          <span class="icon"><i class="fa-brands fa-github"></i></span> GitHub 仓库…
-        </button>
-        <button class="opt-item" data-action="save">
-          <span class="icon"><i class="fa-solid fa-floppy-disk"></i></span> 保存为预设
-        </button>
-        <button class="opt-item" data-action="manage">
-          <span class="icon"><i class="fa-solid fa-gear"></i></span> 管理预设
+      </div>
+    </header>
+
+    <div class="gallery" id="gallery">
+      <div class="empty-state">
+        <i
+          class="fa-regular fa-image"
+          style="font-size: 48px; opacity: 0.3"
+        ></i>
+        <p>选择预设或文件夹以加载图片</p>
+      </div>
+    </div>
+
+    <footer class="footer glass" id="footer">
+      <span id="countInfo">尚未加载图片</span>
+    </footer>
+
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Background panel -->
+    <div class="panel glass" id="bgPanel">
+      <h3><i class="fa-solid fa-palette"></i> 自定义背景</h3>
+      <label>纯色背景</label>
+      <input type="color" id="colorPicker" value="#f5f5f7" />
+      <label style="margin-top: 12px; display: block">图片背景</label>
+      <input type="file" id="bgImageInput" accept="image/*" />
+      <div class="bg-row">
+        <button class="btn" id="resetBgBtn">重置</button>
+        <button class="btn" id="closeBgBtn">完成</button>
+      </div>
+    </div>
+
+    <!-- GitHub panel -->
+    <div class="panel glass" id="githubPanel">
+      <h3><i class="fa-brands fa-github"></i> GitHub 仓库</h3>
+      <label>仓库地址</label>
+      <input
+        type="text"
+        id="ghRepo"
+        placeholder="owner/repo"
+        spellcheck="false"
+      />
+      <label>分支</label>
+      <input
+        type="text"
+        id="ghBranch"
+        placeholder="main"
+        value="main"
+        spellcheck="false"
+      />
+      <label>路径 (可选)</label>
+      <input
+        type="text"
+        id="ghPath"
+        placeholder="path/to/images"
+        spellcheck="false"
+      />
+      <label>Token (可选，提升频率限制)</label>
+      <input
+        type="password"
+        id="ghToken"
+        placeholder="ghp_..."
+        spellcheck="false"
+      />
+      <div class="hint">未提供 Token 时，未认证用户每小时限 60 次请求</div>
+      <label>图片源</label>
+      <select id="ghRawService">
+        <option value="raw.githubusercontent.com">
+          raw.githubusercontent.com
+        </option>
+        <option value="raw.gh.1s.fan">raw.gh.1s.fan</option>
+        <option value="jsdelivr">cdn.jsdelivr.net (gh)</option>
+      </select>
+      <div class="bg-row">
+        <button class="btn" id="cancelGhBtn">取消</button>
+        <button
+          class="btn"
+          id="fetchGhBtn"
+          style="background: rgba(0, 0, 0, 0.08)"
+        >
+          获取并加载
         </button>
       </div>
     </div>
 
-    <button class="btn" id="bgBtn" title="自定义背景">
-      <i class="fa-solid fa-palette" style="font-size:16px"></i>
-      <span>背景</span>
-    </button>
-  </div>
-</header>
-
-<div class="gallery" id="gallery">
-  <div class="empty-state">
-    <i class="fa-regular fa-image" style="font-size:48px;opacity:.3"></i>
-    <p>选择预设或文件夹以加载图片</p>
-  </div>
-</div>
-
-<footer class="footer glass" id="footer">
-  <span id="countInfo">尚未加载图片</span>
-</footer>
-
-<div class="overlay" id="overlay"></div>
-
-<!-- Background panel -->
-<div class="panel glass" id="bgPanel">
-  <h3><i class="fa-solid fa-palette"></i> 自定义背景</h3>
-  <label>纯色背景</label>
-  <input type="color" id="colorPicker" value="#f5f5f7">
-  <label style="margin-top:12px;display:block">图片背景</label>
-  <input type="file" id="bgImageInput" accept="image/*">
-  <div class="bg-row">
-    <button class="btn" id="resetBgBtn">重置</button>
-    <button class="btn" id="closeBgBtn">完成</button>
-  </div>
-</div>
-
-<!-- GitHub panel -->
-<div class="panel glass" id="githubPanel">
-  <h3><i class="fa-brands fa-github"></i> GitHub 仓库</h3>
-  <label>仓库地址</label>
-  <input type="text" id="ghRepo" placeholder="owner/repo" spellcheck="false">
-  <label>分支</label>
-  <input type="text" id="ghBranch" placeholder="main" value="main" spellcheck="false">
-  <label>路径 (可选)</label>
-  <input type="text" id="ghPath" placeholder="path/to/images" spellcheck="false">
-  <label>Token (可选，提升频率限制)</label>
-  <input type="password" id="ghToken" placeholder="ghp_..." spellcheck="false">
-  <div class="hint">未提供 Token 时，未认证用户每小时限 60 次请求</div>
-  <label>图片源</label>
-  <select id="ghRawService">
-    <option value="raw.githubusercontent.com">raw.githubusercontent.com</option>
-    <option value="raw.gh.1s.fan">raw.gh.1s.fan</option>
-    <option value="jsdelivr">cdn.jsdelivr.net (gh)</option>
-  </select>
-  <div class="bg-row">
-    <button class="btn" id="cancelGhBtn">取消</button>
-    <button class="btn" id="fetchGhBtn" style="background:rgba(0,0,0,0.08)">获取并加载</button>
-  </div>
-</div>
-
-<!-- Preset management panel -->
-<div class="panel glass" id="presetPanel">
-  <h3><i class="fa-solid fa-gear"></i> 管理预设</h3>
-  <div class="preset-list" id="presetListPanel"></div>
-  <div class="bg-row">
-    <button class="btn" id="closePresetPanelBtn">完成</button>
-  </div>
-</div>
-
-<!-- Save preset panel -->
-<div class="panel glass" id="savePanel">
-  <h3><i class="fa-solid fa-floppy-disk"></i> 保存为预设</h3>
-  <label>预设名称</label>
-  <input type="text" id="presetNameInput" placeholder="输入名称..." maxlength="30">
-  <label>保存类型</label>
-  <select id="saveTypeSelect">
-    <option value="urls">图片 URL 列表</option>
-    <option value="github">GitHub 仓库配置（可刷新）</option>
-  </select>
-  <div class="hint" id="saveTypeHint">保存当前所有图片的 URL</div>
-  <div class="bg-row">
-    <button class="btn" id="cancelSaveBtn">取消</button>
-    <button class="btn" id="confirmSaveBtn">保存</button>
-  </div>
-</div>
-
-<!-- Lightbox -->
-<div class="lightbox" id="lightbox">
-  <div class="lightbox-bg" id="lightboxBg"></div>
-  <button class="lightbox-close" id="lbClose"><i class="fa-solid fa-xmark"></i></button>
-  <button class="lightbox-nav prev" id="lbPrev"><i class="fa-solid fa-chevron-left"></i></button>
-  <button class="lightbox-nav next" id="lbNext"><i class="fa-solid fa-chevron-right"></i></button>
-  <div class="lightbox-content">
-    <div class="lightbox-img-wrap" id="lbImgWrap">
-      <img id="lbImg" src="" alt="">
+    <!-- Preset management panel -->
+    <div class="panel glass" id="presetPanel">
+      <h3><i class="fa-solid fa-gear"></i> 管理预设</h3>
+      <div class="preset-list" id="presetListPanel"></div>
+      <div class="bg-row">
+        <button class="btn" id="closePresetPanelBtn">完成</button>
+      </div>
     </div>
-    <div class="lightbox-caption" id="lbCaption"></div>
-    <div class="lightbox-zoom" id="lbZoom">
-      <button id="zoomOut" title="缩小"><i class="fa-solid fa-minus"></i></button>
-      <span class="zoom-level" id="zoomLevel">1×</span>
-      <button id="zoomIn" title="放大"><i class="fa-solid fa-plus"></i></button>
-      <button id="zoomReset" title="重置"><i class="fa-solid fa-expand"></i></button>
+
+    <!-- Save preset panel -->
+    <div class="panel glass" id="savePanel">
+      <h3><i class="fa-solid fa-floppy-disk"></i> 保存为预设</h3>
+      <label>预设名称</label>
+      <input
+        type="text"
+        id="presetNameInput"
+        placeholder="输入名称..."
+        maxlength="30"
+      />
+      <label>保存类型</label>
+      <select id="saveTypeSelect">
+        <option value="urls">图片 URL 列表</option>
+        <option value="github">GitHub 仓库配置（可刷新）</option>
+      </select>
+      <div class="hint" id="saveTypeHint">保存当前所有图片的 URL</div>
+      <div class="bg-row">
+        <button class="btn" id="cancelSaveBtn">取消</button>
+        <button class="btn" id="confirmSaveBtn">保存</button>
+      </div>
     </div>
-  </div>
-</div>
 
-<div class="toast" id="toast"></div>
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+      <div class="lightbox-bg" id="lightboxBg"></div>
+      <button class="lightbox-close" id="lbClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <button class="lightbox-nav prev" id="lbPrev">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button class="lightbox-nav next" id="lbNext">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <div class="lightbox-content">
+        <div class="lightbox-img-wrap" id="lbImgWrap">
+          <img id="lbImg" src="" alt="" />
+        </div>
+        <div class="lightbox-caption" id="lbCaption"></div>
+        <div class="lightbox-zoom" id="lbZoom">
+          <button id="zoomOut" title="缩小">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+          <span class="zoom-level" id="zoomLevel">1×</span>
+          <button id="zoomIn" title="放大">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+          <button id="zoomReset" title="重置">
+            <i class="fa-solid fa-expand"></i>
+          </button>
+        </div>
+      </div>
+    </div>
 
-<input type="file" id="folderInput" webkitdirectory multiple accept="image/*" style="display:none">
+    <div class="toast" id="toast"></div>
 
-<script>
-(function() {
-  'use strict';
+    <input
+      type="file"
+      id="folderInput"
+      webkitdirectory
+      multiple
+      accept="image/*"
+      style="display: none"
+    />
 
-  // ================================================================
-  //  🔧 预设配置
-  //  支持两种类型:
-  //    { name, images: [...] }                    — URL 列表
-  //    { type:'github', name, owner, repo, branch, path } — GitHub
-  // ================================================================
-  const BUILTIN_PRESETS = [
-    {
-      name: '网络图片示例',
-      images: [
-        'https://picsum.photos/seed/nat1/600/600',
-        'https://picsum.photos/seed/nat2/600/600',
-        'https://picsum.photos/seed/nat3/600/600',
-        'https://picsum.photos/seed/nat4/600/600',
-        'https://picsum.photos/seed/nat5/600/600',
-        'https://picsum.photos/seed/nat6/600/600',
-        'https://picsum.photos/seed/nat7/600/600',
-        'https://picsum.photos/seed/nat8/600/600',
-        'https://picsum.photos/seed/arch1/600/600',
-        'https://picsum.photos/seed/arch2/600/600',
-        'https://picsum.photos/seed/arch3/600/600',
-        'https://picsum.photos/seed/arch4/600/600',
-        'https://picsum.photos/seed/arch5/600/600',
-        'https://picsum.photos/seed/arch6/600/600',
-        'https://picsum.photos/seed/arch7/600/600',
-        'https://picsum.photos/seed/arch8/600/600',
-        'https://picsum.photos/seed/abs1/600/600',
-        'https://picsum.photos/seed/abs2/600/600',
-        'https://picsum.photos/seed/abs3/600/600',
-        'https://picsum.photos/seed/abs4/600/600',
-        'https://picsum.photos/seed/abs5/600/600',
-        'https://picsum.photos/seed/abs6/600/600',
-        'https://picsum.photos/seed/abs7/600/600',
-        'https://picsum.photos/seed/abs8/600/600',
-      ]
-    },
-    {
-      type: 'github',
-      name: 'Cute-Dress/Dress',
-      owner: 'Cute-Dress',
-      repo: 'Dress',
-      branch: 'master',
-      path: ''
-    }
-  ];
-  // ================================================================
+    <script>
+      (function () {
+        "use strict";
 
-  const STORAGE_KEY = 'gallery_presets';
+        // ================================================================
+        //  🔧 预设配置
+        //  支持两种类型:
+        //    { name, images: [...] }                    — URL 列表
+        //    { type:'github', name, owner, repo, branch, path } — GitHub
+        // ================================================================
+        const BUILTIN_PRESETS = [
+          {
+            name: "网络图片示例",
+            images: [
+              "https://picsum.photos/seed/nat1/600/600",
+              "https://picsum.photos/seed/nat2/600/600",
+              "https://picsum.photos/seed/nat3/600/600",
+              "https://picsum.photos/seed/nat4/600/600",
+              "https://picsum.photos/seed/nat5/600/600",
+              "https://picsum.photos/seed/nat6/600/600",
+              "https://picsum.photos/seed/nat7/600/600",
+              "https://picsum.photos/seed/nat8/600/600",
+              "https://picsum.photos/seed/arch1/600/600",
+              "https://picsum.photos/seed/arch2/600/600",
+              "https://picsum.photos/seed/arch3/600/600",
+              "https://picsum.photos/seed/arch4/600/600",
+              "https://picsum.photos/seed/arch5/600/600",
+              "https://picsum.photos/seed/arch6/600/600",
+              "https://picsum.photos/seed/arch7/600/600",
+              "https://picsum.photos/seed/arch8/600/600",
+              "https://picsum.photos/seed/abs1/600/600",
+              "https://picsum.photos/seed/abs2/600/600",
+              "https://picsum.photos/seed/abs3/600/600",
+              "https://picsum.photos/seed/abs4/600/600",
+              "https://picsum.photos/seed/abs5/600/600",
+              "https://picsum.photos/seed/abs6/600/600",
+              "https://picsum.photos/seed/abs7/600/600",
+              "https://picsum.photos/seed/abs8/600/600",
+            ],
+          },
+          {
+            type: "github",
+            name: "Cute-Dress/Dress",
+            owner: "Cute-Dress",
+            repo: "Dress",
+            branch: "master",
+            path: "",
+          },
+        ];
+        // ================================================================
 
-  const DOM = {
-    gallery:      document.getElementById('gallery'),
-    countInfo:    document.getElementById('countInfo'),
-    overlay:      document.getElementById('overlay'),
-    toast:        document.getElementById('toast'),
-    folderInput:  document.getElementById('folderInput'),
+        const STORAGE_KEY = "gallery_presets";
 
-    presetWrap:     document.querySelector('.preset-wrap'),
-    presetTrigger:  document.getElementById('presetTrigger'),
-    presetDropdown: document.getElementById('presetDropdown'),
-    presetLabel:    document.getElementById('presetLabel'),
-    presetList:     document.getElementById('presetList'),
+        const DOM = {
+          gallery: document.getElementById("gallery"),
+          countInfo: document.getElementById("countInfo"),
+          overlay: document.getElementById("overlay"),
+          toast: document.getElementById("toast"),
+          folderInput: document.getElementById("folderInput"),
 
-    bgBtn:        document.getElementById('bgBtn'),
-    bgPanel:      document.getElementById('bgPanel'),
-    colorPicker:  document.getElementById('colorPicker'),
-    bgImageInput: document.getElementById('bgImageInput'),
-    resetBgBtn:   document.getElementById('resetBgBtn'),
-    closeBgBtn:   document.getElementById('closeBgBtn'),
+          presetWrap: document.querySelector(".preset-wrap"),
+          presetTrigger: document.getElementById("presetTrigger"),
+          presetDropdown: document.getElementById("presetDropdown"),
+          presetLabel: document.getElementById("presetLabel"),
+          presetList: document.getElementById("presetList"),
 
-    githubPanel: document.getElementById('githubPanel'),
-    ghRepo:      document.getElementById('ghRepo'),
-    ghBranch:    document.getElementById('ghBranch'),
-    ghPath:      document.getElementById('ghPath'),
-    ghToken:     document.getElementById('ghToken'),
-    ghRawService: document.getElementById('ghRawService'),
-    cancelGhBtn: document.getElementById('cancelGhBtn'),
-    fetchGhBtn:  document.getElementById('fetchGhBtn'),
+          bgBtn: document.getElementById("bgBtn"),
+          bgPanel: document.getElementById("bgPanel"),
+          colorPicker: document.getElementById("colorPicker"),
+          bgImageInput: document.getElementById("bgImageInput"),
+          resetBgBtn: document.getElementById("resetBgBtn"),
+          closeBgBtn: document.getElementById("closeBgBtn"),
 
-    presetPanel:        document.getElementById('presetPanel'),
-    presetListPanel:    document.getElementById('presetListPanel'),
-    closePresetPanelBtn: document.getElementById('closePresetPanelBtn'),
+          githubPanel: document.getElementById("githubPanel"),
+          ghRepo: document.getElementById("ghRepo"),
+          ghBranch: document.getElementById("ghBranch"),
+          ghPath: document.getElementById("ghPath"),
+          ghToken: document.getElementById("ghToken"),
+          ghRawService: document.getElementById("ghRawService"),
+          cancelGhBtn: document.getElementById("cancelGhBtn"),
+          fetchGhBtn: document.getElementById("fetchGhBtn"),
 
-    savePanel:      document.getElementById('savePanel'),
-    presetNameInput: document.getElementById('presetNameInput'),
-    saveTypeSelect:  document.getElementById('saveTypeSelect'),
-    saveTypeHint:    document.getElementById('saveTypeHint'),
-    cancelSaveBtn:   document.getElementById('cancelSaveBtn'),
-    confirmSaveBtn:  document.getElementById('confirmSaveBtn'),
+          presetPanel: document.getElementById("presetPanel"),
+          presetListPanel: document.getElementById("presetListPanel"),
+          closePresetPanelBtn: document.getElementById("closePresetPanelBtn"),
 
-    lightbox:   document.getElementById('lightbox'),
-    lightboxBg: document.getElementById('lightboxBg'),
-    lbImgWrap:  document.getElementById('lbImgWrap'),
-    lbImg:      document.getElementById('lbImg'),
-    lbCaption:  document.getElementById('lbCaption'),
-    lbPrev:     document.getElementById('lbPrev'),
-    lbNext:     document.getElementById('lbNext'),
-    lbClose:    document.getElementById('lbClose'),
-    zoomIn:     document.getElementById('zoomIn'),
-    zoomOut:    document.getElementById('zoomOut'),
-    zoomReset:  document.getElementById('zoomReset'),
-    zoomLevel:  document.getElementById('zoomLevel'),
-  };
+          savePanel: document.getElementById("savePanel"),
+          presetNameInput: document.getElementById("presetNameInput"),
+          saveTypeSelect: document.getElementById("saveTypeSelect"),
+          saveTypeHint: document.getElementById("saveTypeHint"),
+          cancelSaveBtn: document.getElementById("cancelSaveBtn"),
+          confirmSaveBtn: document.getElementById("confirmSaveBtn"),
 
-  let images = [];
-  let currentIndex = 0;
-  let toastTimer = null;
-  let currentPresetId = null;
-  let lastGithubConfig = null;
+          lightbox: document.getElementById("lightbox"),
+          lightboxBg: document.getElementById("lightboxBg"),
+          lbImgWrap: document.getElementById("lbImgWrap"),
+          lbImg: document.getElementById("lbImg"),
+          lbCaption: document.getElementById("lbCaption"),
+          lbPrev: document.getElementById("lbPrev"),
+          lbNext: document.getElementById("lbNext"),
+          lbClose: document.getElementById("lbClose"),
+          zoomIn: document.getElementById("zoomIn"),
+          zoomOut: document.getElementById("zoomOut"),
+          zoomReset: document.getElementById("zoomReset"),
+          zoomLevel: document.getElementById("zoomLevel"),
+        };
 
-  // ========================== Persistence ==========================
+        let images = [];
+        let currentIndex = 0;
+        let toastTimer = null;
+        let currentPresetId = null;
+        let lastGithubConfig = null;
 
-  function loadCustomPresets() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  }
+        // ========================== Persistence ==========================
 
-  function saveCustomPresets(presets) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
-  }
+        function loadCustomPresets() {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+          } catch {
+            return [];
+          }
+        }
 
-  function getAllPresets() {
-    return [...BUILTIN_PRESETS, ...loadCustomPresets()];
-  }
+        function saveCustomPresets(presets) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+        }
 
-  function presetIconClass(p) {
-    if (p.type === 'github') return 'fa-brands fa-github';
-    if (p.images && p.images.length > 0) {
-      const first = p.images[0];
-      if (first && first.startsWith('data:')) return 'fa-solid fa-folder';
-    }
-    return 'fa-regular fa-image';
-  }
+        function getAllPresets() {
+          return [...BUILTIN_PRESETS, ...loadCustomPresets()];
+        }
 
-  function presetCount(p) {
-    if (p.type === 'github') return p._count != null ? `${p._count} 张` : '';
-    return p.images ? `${p.images.length} 张` : '';
-  }
+        function presetIconClass(p) {
+          if (p.type === "github") return "fa-brands fa-github";
+          if (p.images && p.images.length > 0) {
+            const first = p.images[0];
+            if (first && first.startsWith("data:")) return "fa-solid fa-folder";
+          }
+          return "fa-regular fa-image";
+        }
 
-  // ============================ Toast ==============================
+        function presetCount(p) {
+          if (p.type === "github")
+            return p._count != null ? `${p._count} 张` : "";
+          return p.images ? `${p.images.length} 张` : "";
+        }
 
-  function showToast(msg, duration) {
-    duration = duration || 2000;
-    DOM.toast.textContent = msg;
-    DOM.toast.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => DOM.toast.classList.remove('show'), duration);
-  }
+        // ============================ Toast ==============================
 
-  // ============================ Panels =============================
+        function showToast(msg, duration) {
+          duration = duration || 2000;
+          DOM.toast.textContent = msg;
+          DOM.toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(
+            () => DOM.toast.classList.remove("show"),
+            duration,
+          );
+        }
 
-  function openPanel(panel) {
-    DOM.overlay.classList.add('open');
-    panel.classList.add('open');
-  }
+        // ============================ Panels =============================
 
-  function closeAllPanels() {
-    document.querySelectorAll('.panel.open').forEach(p => p.classList.remove('open'));
-    DOM.overlay.classList.remove('open');
-  }
+        function openPanel(panel) {
+          DOM.overlay.classList.add("open");
+          panel.classList.add("open");
+        }
 
-  DOM.overlay.addEventListener('click', closeAllPanels);
+        function closeAllPanels() {
+          document
+            .querySelectorAll(".panel.open")
+            .forEach((p) => p.classList.remove("open"));
+          DOM.overlay.classList.remove("open");
+        }
 
-  // ========================== Dropdown =============================
+        DOM.overlay.addEventListener("click", closeAllPanels);
 
-  function toggleDropdown(e) {
-    e.stopPropagation();
-    DOM.presetDropdown.classList.toggle('open');
-    DOM.presetTrigger.classList.toggle('open');
-  }
+        // ========================== Dropdown =============================
 
-  function closeDropdown() {
-    DOM.presetDropdown.classList.remove('open');
-    DOM.presetTrigger.classList.remove('open');
-  }
+        function toggleDropdown(e) {
+          e.stopPropagation();
+          DOM.presetDropdown.classList.toggle("open");
+          DOM.presetTrigger.classList.toggle("open");
+        }
 
-  DOM.presetTrigger.addEventListener('click', toggleDropdown);
+        function closeDropdown() {
+          DOM.presetDropdown.classList.remove("open");
+          DOM.presetTrigger.classList.remove("open");
+        }
 
-  document.addEventListener('click', function(e) {
-    if (!DOM.presetWrap || !DOM.presetWrap.contains(e.target)) closeDropdown();
-  });
+        DOM.presetTrigger.addEventListener("click", toggleDropdown);
 
-  function renderPresetDropdown() {
-    const all = getAllPresets();
-    const list = DOM.presetList;
-    list.innerHTML = '';
+        document.addEventListener("click", function (e) {
+          if (!DOM.presetWrap || !DOM.presetWrap.contains(e.target))
+            closeDropdown();
+        });
 
-    if (!all.length) {
-      list.innerHTML = '<div style="padding:12px;text-align:center;font-size:13px;opacity:.4">暂无预设</div>';
-      return;
-    }
+        function renderPresetDropdown() {
+          const all = getAllPresets();
+          const list = DOM.presetList;
+          list.innerHTML = "";
 
-    all.forEach((p, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'opt-item';
-      btn.dataset.presetId = i;
-      btn.innerHTML = `
+          if (!all.length) {
+            list.innerHTML =
+              '<div style="padding:12px;text-align:center;font-size:13px;opacity:.4">暂无预设</div>';
+            return;
+          }
+
+          all.forEach((p, i) => {
+            const btn = document.createElement("button");
+            btn.className = "opt-item";
+            btn.dataset.presetId = i;
+            btn.innerHTML = `
         <span class="icon"><i class="${presetIconClass(p)}"></i></span>
         ${p.name}
         <span class="badge">${presetCount(p)}</span>
       `;
-      btn.addEventListener('click', function() {
-        loadPresetById(i);
-        closeDropdown();
-      });
-      list.appendChild(btn);
-    });
-  }
-
-  // ======================== Load preset by ID =======================
-
-  function loadPresetById(id) {
-    const all = getAllPresets();
-    const preset = all[id];
-    if (!preset) return;
-
-    currentPresetId = id;
-    lastGithubConfig = null;
-
-    if (preset.type === 'github') {
-      DOM.ghRepo.value = preset.owner + '/' + preset.repo;
-      DOM.ghBranch.value = preset.branch || 'main';
-      DOM.ghPath.value = preset.path || '';
-      DOM.ghToken.value = preset.token || '';
-      DOM.ghRawService.value = preset.rawService || localStorage.getItem('gallery_raw_service') || 'raw.githubusercontent.com';
-      DOM.presetLabel.textContent = preset.name;
-      openPanel(DOM.githubPanel);
-      setTimeout(() => DOM.ghToken.focus(), 100);
-    } else if (preset.images && preset.images.length) {
-      DOM.presetLabel.textContent = preset.name;
-      loadImageUrls(preset.images);
-    } else {
-      showToast('预设为空');
-    }
-  }
-
-  // ====================== Load URLs (common) =======================
-
-  function loadImageUrls(urls, statusText) {
-    images = [];
-    DOM.gallery.innerHTML = '';
-    const count = urls.length;
-    if (!count) { showToast('没有图片'); return; }
-
-    for (let i = 0; i < count; i++) {
-      const sk = document.createElement('div');
-      sk.className = 'skeleton';
-      sk.dataset.index = i;
-      DOM.gallery.appendChild(sk);
-    }
-
-    let loaded = 0;
-    urls.forEach((url, idx) => {
-      tryLoad(url, idx);
-    });
-
-    function tryLoad(url, idx, retried) {
-      const img = new Image();
-      img.onload = function() {
-        images[idx] = { src: url, name: url.split('/').pop().split('?')[0].split('#')[0] || 'image' };
-        loaded++;
-        replaceSkeleton(idx, url);
-        if (loaded === count) finishLoad(count);
-      };
-      img.onerror = function() {
-        if (!retried) {
-          setTimeout(function() { tryLoad(url, idx, true); }, 300);
-          return;
+            btn.addEventListener("click", function () {
+              loadPresetById(i);
+              closeDropdown();
+            });
+            list.appendChild(btn);
+          });
         }
-        loaded++;
-        const sk = DOM.gallery.querySelector(`.skeleton[data-index="${idx}"]`);
-        if (sk) sk.remove();
-        if (loaded === count) finishLoad(count);
-      };
-      img.src = url;
-    }
-  }
 
-  function replaceSkeleton(idx, url, alt) {
-    const sk = DOM.gallery.querySelector(`.skeleton[data-index="${idx}"]`);
-    if (!sk) return;
-    sk.remove();
-    const item = document.createElement('div');
-    item.className = 'gallery-item';
-    item.dataset.index = idx;
-    item.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
-    item.addEventListener('click', function() { openLightbox(parseInt(this.dataset.index)); });
-    const after = DOM.gallery.children[idx];
-    after ? DOM.gallery.insertBefore(item, after) : DOM.gallery.appendChild(item);
-  }
+        // ======================== Load preset by ID =======================
 
-  function finishLoad(total) {
-    DOM.gallery.querySelectorAll('.skeleton').forEach(el => el.remove());
-    const actual = images.filter(Boolean).length;
-    DOM.countInfo.textContent = `共 ${images.length} 张图片`;
-    if (actual < total) {
-      showToast(`已加载 ${actual}/${total} 张 (${total - actual} 张失败)`);
-    } else {
-      showToast(`已加载 ${actual} 张图片`);
-    }
-  }
+        function loadPresetById(id) {
+          const all = getAllPresets();
+          const preset = all[id];
+          if (!preset) return;
 
-  // ======================== Folder loading =========================
+          currentPresetId = id;
+          lastGithubConfig = null;
 
-  DOM.folderInput.addEventListener('change', function(e) {
-    const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-    if (!files.length) { showToast('未找到图片文件'); return; }
-    currentPresetId = null;
-    lastGithubConfig = null;
-    DOM.presetLabel.innerHTML = '<i class="fa-solid fa-folder"></i> 本地文件夹';
-    loadFolderFiles(files);
-  });
-
-  function loadFolderFiles(files) {
-    images = [];
-    DOM.gallery.innerHTML = '';
-    const count = files.length;
-    if (!count) return;
-
-    for (let i = 0; i < count; i++) {
-      const sk = document.createElement('div');
-      sk.className = 'skeleton';
-      sk.dataset.index = i;
-      DOM.gallery.appendChild(sk);
-    }
-
-    let loaded = 0;
-    files.forEach((file, idx) => {
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        images[idx] = { src: ev.target.result, name: file.name };
-        loaded++;
-        replaceSkeleton(idx, ev.target.result, file.name);
-        if (loaded === count) {
-          DOM.gallery.querySelectorAll('.skeleton').forEach(el => el.remove());
-          DOM.countInfo.textContent = `共 ${loaded} 张图片`;
-          showToast(`已加载 ${loaded} 张图片`);
+          if (preset.type === "github") {
+            DOM.ghRepo.value = preset.owner + "/" + preset.repo;
+            DOM.ghBranch.value = preset.branch || "main";
+            DOM.ghPath.value = preset.path || "";
+            DOM.ghToken.value = preset.token || "";
+            DOM.ghRawService.value =
+              preset.rawService ||
+              localStorage.getItem("gallery_raw_service") ||
+              "raw.githubusercontent.com";
+            DOM.presetLabel.textContent = preset.name;
+            openPanel(DOM.githubPanel);
+            setTimeout(() => DOM.ghToken.focus(), 100);
+          } else if (preset.images && preset.images.length) {
+            DOM.presetLabel.textContent = preset.name;
+            loadImageUrls(preset.images);
+          } else {
+            showToast("预设为空");
+          }
         }
-      };
-      reader.readAsDataURL(file);
-    });
-  }
 
-  // ======================== GitHub source ==========================
+        // ====================== Load URLs (common) =======================
 
-  function openGitHubPanel() {
-    if (lastGithubConfig) {
-      DOM.ghRepo.value = lastGithubConfig.owner + '/' + lastGithubConfig.repo;
-      DOM.ghBranch.value = lastGithubConfig.branch;
-      DOM.ghPath.value = lastGithubConfig.path || '';
-      DOM.ghToken.value = lastGithubConfig.token || '';
-      DOM.ghRawService.value = lastGithubConfig.rawService || 'raw.githubusercontent.com';
-    } else {
-      const saved = localStorage.getItem('gallery_raw_service');
-      if (saved) DOM.ghRawService.value = saved;
-    }
-    openPanel(DOM.githubPanel);
-    setTimeout(() => DOM.ghRepo.focus(), 100);
-  }
+        function loadImageUrls(urls, statusText) {
+          images = [];
+          DOM.gallery.innerHTML = "";
+          const count = urls.length;
+          if (!count) {
+            showToast("没有图片");
+            return;
+          }
 
-  DOM.cancelGhBtn.addEventListener('click', closeAllPanels);
-  DOM.fetchGhBtn.addEventListener('click', doGitHubFetch);
+          for (let i = 0; i < count; i++) {
+            const sk = document.createElement("div");
+            sk.className = "skeleton";
+            sk.dataset.index = i;
+            DOM.gallery.appendChild(sk);
+          }
 
-  DOM.ghRepo.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') DOM.ghBranch.focus();
-  });
-  DOM.ghBranch.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') DOM.ghPath.focus();
-  });
-  DOM.ghPath.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') doGitHubFetch();
-  });
+          let loaded = 0;
+          urls.forEach((url, idx) => {
+            tryLoad(url, idx);
+          });
 
-  async function doGitHubFetch() {
-    const repo = DOM.ghRepo.value.trim();
-    const branch = DOM.ghBranch.value.trim() || 'main';
-    const path = DOM.ghPath.value.trim();
-    const token = DOM.ghToken.value.trim() || null;
-    const rawService = DOM.ghRawService.value;
-
-    const match = repo.match(/^([\w.-]+)\/([\w.-]+)$/);
-    if (!match) { showToast('请输入有效的 owner/repo'); return; }
-    const owner = match[1];
-    const repoName = match[2];
-
-    DOM.fetchGhBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 获取中…';
-    DOM.fetchGhBtn.disabled = true;
-
-    try {
-      const urls = await fetchGitHubImages(owner, repoName, branch, path, token, rawService);
-      if (!urls.length) {
-        showToast('未找到图片文件');
-        DOM.fetchGhBtn.innerHTML = '获取并加载';
-        DOM.fetchGhBtn.disabled = false;
-        return;
-      }
-
-      localStorage.setItem('gallery_raw_service', rawService);
-      lastGithubConfig = { owner, repo: repoName, branch, path, token, rawService };
-      currentPresetId = null;
-      DOM.presetLabel.innerHTML = `<i class="fa-brands fa-github"></i> ${owner}/${repoName}`;
-      closeAllPanels();
-      loadImageUrls(urls, `${owner}/${repoName}`);
-
-      setTimeout(function() { renderPresetDropdown(); }, 0);
-    } catch (err) {
-      showToast('获取失败: ' + err.message);
-    }
-
-    DOM.fetchGhBtn.innerHTML = '获取并加载';
-    DOM.fetchGhBtn.disabled = false;
-  }
-
-  async function fetchGitHubImages(owner, repo, branch, path, token, rawService) {
-    rawService = rawService || 'raw.githubusercontent.com';
-    const headers = { 'Accept': 'application/vnd.github.v3+json' };
-    if (token) headers['Authorization'] = 'token ' + token;
-
-    const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
-    const res = await fetch(treeUrl, { headers });
-
-    if (res.status === 403) {
-      throw new Error('API 频率限制，请添加 Token 或稍后再试');
-    }
-    if (res.status === 404) {
-      throw new Error('仓库或分支不存在');
-    }
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
-    if (!json.tree || !Array.isArray(json.tree)) {
-      throw new Error('无法获取文件树');
-    }
-
-    if (json.truncated) {
-      console.warn('仓库文件树过大，结果可能不完整');
-    }
-
-    const extSet = new Set(['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico','.tiff','.tif','.avif','.heic','.heif']);
-    const filterPath = path ? path.replace(/^\/|\/$/g, '') + '/' : '';
-    const found = [];
-
-    for (const item of json.tree) {
-      if (item.type !== 'blob') continue;
-      if (filterPath && !item.path.startsWith(filterPath)) continue;
-
-      const ext = '.' + item.path.split('.').pop().toLowerCase();
-      if (extSet.has(ext)) {
-        const encodedPath = item.path.split('/').map(s => encodeURIComponent(s)).join('/');
-        if (rawService === 'jsdelivr') {
-          found.push(`https://cdn.jsdelivr.net/gh/${owner}/${repo}@${encodeURIComponent(branch)}/${encodedPath}`);
-        } else {
-          const host = rawService === 'raw.gh.1s.fan' ? 'raw.gh.1s.fan' : 'raw.githubusercontent.com';
-          found.push(`https://${host}/${owner}/${repo}/${encodeURIComponent(branch)}/${encodedPath}`);
+          function tryLoad(url, idx, retried) {
+            const img = new Image();
+            img.onload = function () {
+              images[idx] = {
+                src: url,
+                name:
+                  url.split("/").pop().split("?")[0].split("#")[0] || "image",
+              };
+              loaded++;
+              replaceSkeleton(idx, url);
+              if (loaded === count) finishLoad(count);
+            };
+            img.onerror = function () {
+              if (!retried) {
+                setTimeout(function () {
+                  tryLoad(url, idx, true);
+                }, 300);
+                return;
+              }
+              loaded++;
+              const sk = DOM.gallery.querySelector(
+                `.skeleton[data-index="${idx}"]`,
+              );
+              if (sk) sk.remove();
+              if (loaded === count) finishLoad(count);
+            };
+            img.src = url;
+          }
         }
-      }
-    }
 
-    return found;
-  }
+        function replaceSkeleton(idx, url, alt) {
+          const sk = DOM.gallery.querySelector(
+            `.skeleton[data-index="${idx}"]`,
+          );
+          if (!sk) return;
+          sk.remove();
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+          item.dataset.index = idx;
+          item.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+          item.addEventListener("click", function () {
+            openLightbox(parseInt(this.dataset.index));
+          });
+          const after = DOM.gallery.children[idx];
+          after
+            ? DOM.gallery.insertBefore(item, after)
+            : DOM.gallery.appendChild(item);
+        }
 
-  // ======================== Save preset ============================
+        function finishLoad(total) {
+          DOM.gallery
+            .querySelectorAll(".skeleton")
+            .forEach((el) => el.remove());
+          const actual = images.filter(Boolean).length;
+          DOM.countInfo.textContent = `共 ${images.length} 张图片`;
+          if (actual < total) {
+            showToast(
+              `已加载 ${actual}/${total} 张 (${total - actual} 张失败)`,
+            );
+          } else {
+            showToast(`已加载 ${actual} 张图片`);
+          }
+        }
 
-  function openSavePanel() {
-    if (!images.length) { showToast('没有可保存的图片'); return; }
+        // ======================== Folder loading =========================
 
-    const hasGithub = lastGithubConfig !== null;
+        DOM.folderInput.addEventListener("change", function (e) {
+          const files = Array.from(e.target.files).filter((f) =>
+            f.type.startsWith("image/"),
+          );
+          if (!files.length) {
+            showToast("未找到图片文件");
+            return;
+          }
+          currentPresetId = null;
+          lastGithubConfig = null;
+          DOM.presetLabel.innerHTML =
+            '<i class="fa-solid fa-folder"></i> 本地文件夹';
+          loadFolderFiles(files);
+        });
 
-    DOM.presetNameInput.value = '';
-    DOM.saveTypeSelect.value = hasGithub ? 'github' : 'urls';
-    DOM.saveTypeSelect.disabled = !hasGithub;
-    updateSaveTypeHint();
+        function loadFolderFiles(files) {
+          images = [];
+          DOM.gallery.innerHTML = "";
+          const count = files.length;
+          if (!count) return;
 
-    openPanel(DOM.savePanel);
-    setTimeout(() => DOM.presetNameInput.focus(), 100);
-  }
+          for (let i = 0; i < count; i++) {
+            const sk = document.createElement("div");
+            sk.className = "skeleton";
+            sk.dataset.index = i;
+            DOM.gallery.appendChild(sk);
+          }
 
-  function updateSaveTypeHint() {
-    const type = DOM.saveTypeSelect.value;
-    if (type === 'github') {
-      DOM.saveTypeHint.textContent = '保存仓库配置，下次加载时可重新获取最新图片';
-    } else {
-      DOM.saveTypeHint.textContent = '保存当前所有图片的 URL';
-    }
-  }
+          let loaded = 0;
+          files.forEach((file, idx) => {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              images[idx] = { src: ev.target.result, name: file.name };
+              loaded++;
+              replaceSkeleton(idx, ev.target.result, file.name);
+              if (loaded === count) {
+                DOM.gallery
+                  .querySelectorAll(".skeleton")
+                  .forEach((el) => el.remove());
+                DOM.countInfo.textContent = `共 ${loaded} 张图片`;
+                showToast(`已加载 ${loaded} 张图片`);
+              }
+            };
+            reader.readAsDataURL(file);
+          });
+        }
 
-  DOM.saveTypeSelect.addEventListener('change', updateSaveTypeHint);
+        // ======================== GitHub source ==========================
 
-  DOM.cancelSaveBtn.addEventListener('click', closeAllPanels);
+        function openGitHubPanel() {
+          if (lastGithubConfig) {
+            DOM.ghRepo.value =
+              lastGithubConfig.owner + "/" + lastGithubConfig.repo;
+            DOM.ghBranch.value = lastGithubConfig.branch;
+            DOM.ghPath.value = lastGithubConfig.path || "";
+            DOM.ghToken.value = lastGithubConfig.token || "";
+            DOM.ghRawService.value =
+              lastGithubConfig.rawService || "raw.githubusercontent.com";
+          } else {
+            const saved = localStorage.getItem("gallery_raw_service");
+            if (saved) DOM.ghRawService.value = saved;
+          }
+          openPanel(DOM.githubPanel);
+          setTimeout(() => DOM.ghRepo.focus(), 100);
+        }
 
-  DOM.confirmSaveBtn.addEventListener('click', function() {
-    const name = DOM.presetNameInput.value.trim();
-    if (!name) { showToast('请输入名称'); return; }
+        DOM.cancelGhBtn.addEventListener("click", closeAllPanels);
+        DOM.fetchGhBtn.addEventListener("click", doGitHubFetch);
 
-    const type = DOM.saveTypeSelect.value;
-    const presets = loadCustomPresets();
+        DOM.ghRepo.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") DOM.ghBranch.focus();
+        });
+        DOM.ghBranch.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") DOM.ghPath.focus();
+        });
+        DOM.ghPath.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") doGitHubFetch();
+        });
 
-    if (type === 'github' && lastGithubConfig) {
-      presets.push({
-        type: 'github',
-        name: name,
-        owner: lastGithubConfig.owner,
-        repo: lastGithubConfig.repo,
-        branch: lastGithubConfig.branch,
-        path: lastGithubConfig.path || '',
-        token: lastGithubConfig.token || '',
-        rawService: lastGithubConfig.rawService || 'raw.githubusercontent.com'
-      });
-    } else {
-      const urls = images.map(img => img.src).filter(Boolean);
-      if (!urls.length) { showToast('没有可保存的图片 URL'); return; }
-      presets.push({ name, images: urls });
-    }
+        async function doGitHubFetch() {
+          const repo = DOM.ghRepo.value.trim();
+          const branch = DOM.ghBranch.value.trim() || "main";
+          const path = DOM.ghPath.value.trim();
+          const token = DOM.ghToken.value.trim() || null;
+          const rawService = DOM.ghRawService.value;
 
-    saveCustomPresets(presets);
-    renderPresetDropdown();
-    closeAllPanels();
-    showToast(`已保存预设: ${name}`);
-  });
+          const match = repo.match(/^([\w.-]+)\/([\w.-]+)$/);
+          if (!match) {
+            showToast("请输入有效的 owner/repo");
+            return;
+          }
+          const owner = match[1];
+          const repoName = match[2];
 
-  DOM.presetNameInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') DOM.confirmSaveBtn.click();
-  });
+          DOM.fetchGhBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> 获取中…';
+          DOM.fetchGhBtn.disabled = true;
 
-  // ====================== Preset management ========================
+          try {
+            const urls = await fetchGitHubImages(
+              owner,
+              repoName,
+              branch,
+              path,
+              token,
+              rawService,
+            );
+            if (!urls.length) {
+              showToast("未找到图片文件");
+              DOM.fetchGhBtn.innerHTML = "获取并加载";
+              DOM.fetchGhBtn.disabled = false;
+              return;
+            }
 
-  function openPresetManager() {
-    renderPresetManager();
-    openPanel(DOM.presetPanel);
-  }
+            localStorage.setItem("gallery_raw_service", rawService);
+            lastGithubConfig = {
+              owner,
+              repo: repoName,
+              branch,
+              path,
+              token,
+              rawService,
+            };
+            currentPresetId = null;
+            DOM.presetLabel.innerHTML = `<i class="fa-brands fa-github"></i> ${owner}/${repoName}`;
+            closeAllPanels();
+            loadImageUrls(urls, `${owner}/${repoName}`);
 
-  DOM.closePresetPanelBtn.addEventListener('click', closeAllPanels);
+            setTimeout(function () {
+              renderPresetDropdown();
+            }, 0);
+          } catch (err) {
+            showToast("获取失败: " + err.message);
+          }
 
-  function renderPresetManager() {
-    const container = DOM.presetListPanel;
-    container.innerHTML = '';
+          DOM.fetchGhBtn.innerHTML = "获取并加载";
+          DOM.fetchGhBtn.disabled = false;
+        }
 
-    BUILTIN_PRESETS.forEach(p => {
-      const row = document.createElement('div');
-      row.className = 'preset-list-item';
-      row.innerHTML = `
+        async function fetchGitHubImages(
+          owner,
+          repo,
+          branch,
+          path,
+          token,
+          rawService,
+        ) {
+          rawService = rawService || "raw.githubusercontent.com";
+          const headers = { Accept: "application/vnd.github.v3+json" };
+          if (token) headers["Authorization"] = "token " + token;
+
+          const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
+          const res = await fetch(treeUrl, { headers });
+
+          if (res.status === 403) {
+            throw new Error("API 频率限制，请添加 Token 或稍后再试");
+          }
+          if (res.status === 404) {
+            throw new Error("仓库或分支不存在");
+          }
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+
+          const json = await res.json();
+          if (!json.tree || !Array.isArray(json.tree)) {
+            throw new Error("无法获取文件树");
+          }
+
+          if (json.truncated) {
+            console.warn("仓库文件树过大，结果可能不完整");
+          }
+
+          const extSet = new Set([
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".webp",
+            ".svg",
+            ".bmp",
+            ".ico",
+            ".tiff",
+            ".tif",
+            ".avif",
+            ".heic",
+            ".heif",
+          ]);
+          const filterPath = path ? path.replace(/^\/|\/$/g, "") + "/" : "";
+          const found = [];
+
+          for (const item of json.tree) {
+            if (item.type !== "blob") continue;
+            if (filterPath && !item.path.startsWith(filterPath)) continue;
+
+            const ext = "." + item.path.split(".").pop().toLowerCase();
+            if (extSet.has(ext)) {
+              const encodedPath = item.path
+                .split("/")
+                .map((s) => encodeURIComponent(s))
+                .join("/");
+              if (rawService === "jsdelivr") {
+                found.push(
+                  `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${encodeURIComponent(branch)}/${encodedPath}`,
+                );
+              } else {
+                const host =
+                  rawService === "raw.gh.1s.fan"
+                    ? "raw.gh.1s.fan"
+                    : "raw.githubusercontent.com";
+                found.push(
+                  `https://${host}/${owner}/${repo}/${encodeURIComponent(branch)}/${encodedPath}`,
+                );
+              }
+            }
+          }
+
+          return found;
+        }
+
+        // ======================== Save preset ============================
+
+        function openSavePanel() {
+          if (!images.length) {
+            showToast("没有可保存的图片");
+            return;
+          }
+
+          const hasGithub = lastGithubConfig !== null;
+
+          DOM.presetNameInput.value = "";
+          DOM.saveTypeSelect.value = hasGithub ? "github" : "urls";
+          DOM.saveTypeSelect.disabled = !hasGithub;
+          updateSaveTypeHint();
+
+          openPanel(DOM.savePanel);
+          setTimeout(() => DOM.presetNameInput.focus(), 100);
+        }
+
+        function updateSaveTypeHint() {
+          const type = DOM.saveTypeSelect.value;
+          if (type === "github") {
+            DOM.saveTypeHint.textContent =
+              "保存仓库配置，下次加载时可重新获取最新图片";
+          } else {
+            DOM.saveTypeHint.textContent = "保存当前所有图片的 URL";
+          }
+        }
+
+        DOM.saveTypeSelect.addEventListener("change", updateSaveTypeHint);
+
+        DOM.cancelSaveBtn.addEventListener("click", closeAllPanels);
+
+        DOM.confirmSaveBtn.addEventListener("click", function () {
+          const name = DOM.presetNameInput.value.trim();
+          if (!name) {
+            showToast("请输入名称");
+            return;
+          }
+
+          const type = DOM.saveTypeSelect.value;
+          const presets = loadCustomPresets();
+
+          if (type === "github" && lastGithubConfig) {
+            presets.push({
+              type: "github",
+              name: name,
+              owner: lastGithubConfig.owner,
+              repo: lastGithubConfig.repo,
+              branch: lastGithubConfig.branch,
+              path: lastGithubConfig.path || "",
+              token: lastGithubConfig.token || "",
+              rawService:
+                lastGithubConfig.rawService || "raw.githubusercontent.com",
+            });
+          } else {
+            const urls = images.map((img) => img.src).filter(Boolean);
+            if (!urls.length) {
+              showToast("没有可保存的图片 URL");
+              return;
+            }
+            presets.push({ name, images: urls });
+          }
+
+          saveCustomPresets(presets);
+          renderPresetDropdown();
+          closeAllPanels();
+          showToast(`已保存预设: ${name}`);
+        });
+
+        DOM.presetNameInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") DOM.confirmSaveBtn.click();
+        });
+
+        // ====================== Preset management ========================
+
+        function openPresetManager() {
+          renderPresetManager();
+          openPanel(DOM.presetPanel);
+        }
+
+        DOM.closePresetPanelBtn.addEventListener("click", closeAllPanels);
+
+        function renderPresetManager() {
+          const container = DOM.presetListPanel;
+          container.innerHTML = "";
+
+          BUILTIN_PRESETS.forEach((p) => {
+            const row = document.createElement("div");
+            row.className = "preset-list-item";
+            row.innerHTML = `
         <div class="p-info">
           <span class="p-icon"><i class="${presetIconClass(p)}"></i></span>
           <span class="p-name">${p.name}</span>
@@ -1427,288 +1674,331 @@ body {
         </div>
         <span class="p-lock"><i class="fa-solid fa-lock"></i></span>
       `;
-      container.appendChild(row);
-    });
+            container.appendChild(row);
+          });
 
-    const custom = loadCustomPresets();
-    if (custom.length) {
-      const sep = document.createElement('div');
-      sep.style.cssText = 'font-size:11px;font-weight:600;opacity:.4;padding:8px 0 4px;text-transform:uppercase;letter-spacing:.5px;';
-      sep.textContent = '自定义';
-      container.appendChild(sep);
-      custom.forEach((p, i) => {
-        const row = document.createElement('div');
-        row.className = 'preset-list-item';
-        const delBtn = document.createElement('button');
-        delBtn.className = 'p-del';
-        delBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-        delBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          const presets = loadCustomPresets();
-          presets.splice(i, 1);
-          saveCustomPresets(presets);
-          renderPresetDropdown();
-          renderPresetManager();
-          showToast('已删除');
-        });
-        row.innerHTML = `
+          const custom = loadCustomPresets();
+          if (custom.length) {
+            const sep = document.createElement("div");
+            sep.style.cssText =
+              "font-size:11px;font-weight:600;opacity:.4;padding:8px 0 4px;text-transform:uppercase;letter-spacing:.5px;";
+            sep.textContent = "自定义";
+            container.appendChild(sep);
+            custom.forEach((p, i) => {
+              const row = document.createElement("div");
+              row.className = "preset-list-item";
+              const delBtn = document.createElement("button");
+              delBtn.className = "p-del";
+              delBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+              delBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                const presets = loadCustomPresets();
+                presets.splice(i, 1);
+                saveCustomPresets(presets);
+                renderPresetDropdown();
+                renderPresetManager();
+                showToast("已删除");
+              });
+              row.innerHTML = `
           <div class="p-info">
             <span class="p-icon"><i class="${presetIconClass(p)}"></i></span>
             <span class="p-name">${p.name}</span>
             <span class="p-count">${presetCount(p)}</span>
           </div>
         `;
-        row.appendChild(delBtn);
-        container.appendChild(row);
-      });
-    }
+              row.appendChild(delBtn);
+              container.appendChild(row);
+            });
+          }
 
-    if (!BUILTIN_PRESETS.length && !custom.length) {
-      container.innerHTML = '<div style="padding:12px;text-align:center;font-size:13px;opacity:.4">暂无预设</div>';
-    }
-  }
+          if (!BUILTIN_PRESETS.length && !custom.length) {
+            container.innerHTML =
+              '<div style="padding:12px;text-align:center;font-size:13px;opacity:.4">暂无预设</div>';
+          }
+        }
 
-  // ======================== Background =============================
+        // ======================== Background =============================
 
-  DOM.bgBtn.addEventListener('click', function() { openPanel(DOM.bgPanel); });
-  DOM.closeBgBtn.addEventListener('click', closeAllPanels);
+        DOM.bgBtn.addEventListener("click", function () {
+          openPanel(DOM.bgPanel);
+        });
+        DOM.closeBgBtn.addEventListener("click", closeAllPanels);
 
-  DOM.colorPicker.addEventListener('input', function() {
-    document.body.style.backgroundColor = this.value;
-    document.body.style.backgroundImage = 'none';
-  });
+        DOM.colorPicker.addEventListener("input", function () {
+          document.body.style.backgroundColor = this.value;
+          document.body.style.backgroundImage = "none";
+        });
 
-  DOM.bgImageInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      document.body.style.backgroundImage = `url(${ev.target.result})`;
-      showToast('背景已更新');
-    };
-    reader.readAsDataURL(file);
-  });
+        DOM.bgImageInput.addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (ev) {
+            document.body.style.backgroundImage = `url(${ev.target.result})`;
+            showToast("背景已更新");
+          };
+          reader.readAsDataURL(file);
+        });
 
-  DOM.resetBgBtn.addEventListener('click', function() {
-    document.body.style.backgroundColor = '#f5f5f7';
-    document.body.style.backgroundImage = 'none';
-    DOM.colorPicker.value = '#f5f5f7';
-    DOM.bgImageInput.value = '';
-    showToast('背景已重置');
-    closeAllPanels();
-  });
+        DOM.resetBgBtn.addEventListener("click", function () {
+          document.body.style.backgroundColor = "#f5f5f7";
+          document.body.style.backgroundImage = "none";
+          DOM.colorPicker.value = "#f5f5f7";
+          DOM.bgImageInput.value = "";
+          showToast("背景已重置");
+          closeAllPanels();
+        });
 
-  // ========================== Lightbox =============================
+        // ========================== Lightbox =============================
 
-  let zoom = 1;
-  let panX = 0, panY = 0;
-  let isDragging = false;
-  let dragStartX, dragStartY;
-  let distStart = 0;
-  let zoomStart = 1;
+        let zoom = 1;
+        let panX = 0,
+          panY = 0;
+        let isDragging = false;
+        let dragStartX, dragStartY;
+        let distStart = 0;
+        let zoomStart = 1;
 
-  function resetZoom() {
-    zoom = 1; panX = 0; panY = 0;
-    applyTransform();
-    DOM.zoomLevel.textContent = '1×';
-  }
+        function resetZoom() {
+          zoom = 1;
+          panX = 0;
+          panY = 0;
+          applyTransform();
+          DOM.zoomLevel.textContent = "1×";
+        }
 
-  function applyTransform() {
-    DOM.lbImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-  }
+        function applyTransform() {
+          DOM.lbImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+        }
 
-  function updateZoom(delta, cx, cy) {
-    const old = zoom;
-    zoom = Math.max(1, Math.min(10, zoom + delta));
-    if (zoom === 1) { panX = 0; panY = 0; }
-    else if (cx != null) {
-      const ratio = zoom / old;
-      panX = cx - ratio * (cx - panX);
-      panY = cy - ratio * (cy - panY);
-    }
-    applyTransform();
-    DOM.zoomLevel.textContent = zoom.toFixed(1) + '×';
-  }
+        function updateZoom(delta, cx, cy) {
+          const old = zoom;
+          zoom = Math.max(1, Math.min(10, zoom + delta));
+          if (zoom === 1) {
+            panX = 0;
+            panY = 0;
+          } else if (cx != null) {
+            const ratio = zoom / old;
+            panX = cx - ratio * (cx - panX);
+            panY = cy - ratio * (cy - panY);
+          }
+          applyTransform();
+          DOM.zoomLevel.textContent = zoom.toFixed(1) + "×";
+        }
 
-  function openLightbox(index) {
-    if (!images.length || !images[index]) return;
-    currentIndex = index;
-    resetZoom();
-    updateLightbox();
-    DOM.lightbox.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
+        function openLightbox(index) {
+          if (!images.length || !images[index]) return;
+          currentIndex = index;
+          resetZoom();
+          updateLightbox();
+          DOM.lightbox.classList.add("open");
+          document.body.style.overflow = "hidden";
+        }
 
-  function closeLightbox() {
-    DOM.lightbox.classList.remove('open');
-    document.body.style.overflow = '';
-    resetZoom();
-  }
+        function closeLightbox() {
+          DOM.lightbox.classList.remove("open");
+          document.body.style.overflow = "";
+          resetZoom();
+        }
 
-  function updateLightbox() {
-    const img = images[currentIndex];
-    if (!img) return;
-    DOM.lbImg.classList.add('no-anim');
-    DOM.lbImg.src = img.src;
-    DOM.lbImg.alt = img.name;
-    DOM.lbImg.onload = function() {
-      resetZoom();
-      DOM.lbImg.classList.remove('no-anim');
-    };
-    DOM.lbCaption.textContent = `${currentIndex + 1} / ${images.length} — ${img.name}`;
-  }
+        function updateLightbox() {
+          const img = images[currentIndex];
+          if (!img) return;
+          DOM.lbImg.classList.add("no-anim");
+          DOM.lbImg.src = img.src;
+          DOM.lbImg.alt = img.name;
+          DOM.lbImg.onload = function () {
+            resetZoom();
+            DOM.lbImg.classList.remove("no-anim");
+          };
+          DOM.lbCaption.textContent = `${currentIndex + 1} / ${images.length} — ${img.name}`;
+        }
 
-  function prevImage() {
-    if (!images.length) return;
-    currentIndex = (currentIndex - 1 + images.length) % images.length;
-    updateLightbox();
-  }
+        function prevImage() {
+          if (!images.length) return;
+          currentIndex = (currentIndex - 1 + images.length) % images.length;
+          updateLightbox();
+        }
 
-  function nextImage() {
-    if (!images.length) return;
-    currentIndex = (currentIndex + 1) % images.length;
-    updateLightbox();
-  }
+        function nextImage() {
+          if (!images.length) return;
+          currentIndex = (currentIndex + 1) % images.length;
+          updateLightbox();
+        }
 
-  DOM.lbClose.addEventListener('click', closeLightbox);
-  DOM.lightboxBg.addEventListener('click', closeLightbox);
-  DOM.lbPrev.addEventListener('click', prevImage);
-  DOM.lbNext.addEventListener('click', nextImage);
+        DOM.lbClose.addEventListener("click", closeLightbox);
+        DOM.lightboxBg.addEventListener("click", closeLightbox);
+        DOM.lbPrev.addEventListener("click", prevImage);
+        DOM.lbNext.addEventListener("click", nextImage);
 
-  // Zoom buttons
-  DOM.zoomIn.addEventListener('click', function() {
-    updateZoom(0.5);
-  });
-  DOM.zoomOut.addEventListener('click', function() {
-    updateZoom(-0.5);
-  });
-  DOM.zoomReset.addEventListener('click', resetZoom);
+        // Zoom buttons
+        DOM.zoomIn.addEventListener("click", function () {
+          updateZoom(0.5);
+        });
+        DOM.zoomOut.addEventListener("click", function () {
+          updateZoom(-0.5);
+        });
+        DOM.zoomReset.addEventListener("click", resetZoom);
 
-  // Mouse wheel zoom
-  DOM.lbImgWrap.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    const rect = DOM.lbImgWrap.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    updateZoom(e.deltaY < 0 ? 0.5 : -0.5, cx, cy);
-  }, { passive: false });
+        // Mouse wheel zoom
+        DOM.lbImgWrap.addEventListener(
+          "wheel",
+          function (e) {
+            e.preventDefault();
+            const rect = DOM.lbImgWrap.getBoundingClientRect();
+            const cx = e.clientX - rect.left;
+            const cy = e.clientY - rect.top;
+            updateZoom(e.deltaY < 0 ? 0.5 : -0.5, cx, cy);
+          },
+          { passive: false },
+        );
 
-  // Drag to pan
-  DOM.lbImgWrap.addEventListener('mousedown', function(e) {
-    if (zoom <= 1) return;
-    isDragging = true;
-    dragStartX = e.clientX - panX;
-    dragStartY = e.clientY - panY;
-    DOM.lbImgWrap.classList.add('dragging');
-  });
+        // Drag to pan
+        DOM.lbImgWrap.addEventListener("mousedown", function (e) {
+          if (zoom <= 1) return;
+          isDragging = true;
+          dragStartX = e.clientX - panX;
+          dragStartY = e.clientY - panY;
+          DOM.lbImgWrap.classList.add("dragging");
+        });
 
-  document.addEventListener('mousemove', function(e) {
-    if (!isDragging) return;
-    panX = e.clientX - dragStartX;
-    panY = e.clientY - dragStartY;
-    applyTransform();
-  });
+        document.addEventListener("mousemove", function (e) {
+          if (!isDragging) return;
+          panX = e.clientX - dragStartX;
+          panY = e.clientY - dragStartY;
+          applyTransform();
+        });
 
-  document.addEventListener('mouseup', function() {
-    if (isDragging) {
-      isDragging = false;
-      DOM.lbImgWrap.classList.remove('dragging');
-    }
-  });
+        document.addEventListener("mouseup", function () {
+          if (isDragging) {
+            isDragging = false;
+            DOM.lbImgWrap.classList.remove("dragging");
+          }
+        });
 
-  // Pinch zoom
-  DOM.lbImgWrap.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 2) {
-      distStart = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      zoomStart = zoom;
-    }
-  }, { passive: true });
+        // Pinch zoom
+        DOM.lbImgWrap.addEventListener(
+          "touchstart",
+          function (e) {
+            if (e.touches.length === 2) {
+              distStart = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY,
+              );
+              zoomStart = zoom;
+            }
+          },
+          { passive: true },
+        );
 
-  DOM.lbImgWrap.addEventListener('touchmove', function(e) {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      const s = dist / distStart;
-      zoom = Math.max(1, Math.min(10, zoomStart * s));
-      DOM.lbImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-      DOM.lbImg.classList.add('no-anim');
-      DOM.zoomLevel.textContent = zoom.toFixed(1) + '×';
-    }
-  }, { passive: false });
+        DOM.lbImgWrap.addEventListener(
+          "touchmove",
+          function (e) {
+            if (e.touches.length === 2) {
+              e.preventDefault();
+              const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY,
+              );
+              const s = dist / distStart;
+              zoom = Math.max(1, Math.min(10, zoomStart * s));
+              DOM.lbImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+              DOM.lbImg.classList.add("no-anim");
+              DOM.zoomLevel.textContent = zoom.toFixed(1) + "×";
+            }
+          },
+          { passive: false },
+        );
 
-  DOM.lbImgWrap.addEventListener('touchend', function(e) {
-    if (e.touches.length < 2) {
-      DOM.lbImg.classList.remove('no-anim');
-      if (zoom === 1) { panX = 0; panY = 0; applyTransform(); }
-    }
-  }, { passive: true });
+        DOM.lbImgWrap.addEventListener(
+          "touchend",
+          function (e) {
+            if (e.touches.length < 2) {
+              DOM.lbImg.classList.remove("no-anim");
+              if (zoom === 1) {
+                panX = 0;
+                panY = 0;
+                applyTransform();
+              }
+            }
+          },
+          { passive: true },
+        );
 
-  // Double-click to zoom
-  DOM.lbImgWrap.addEventListener('dblclick', function(e) {
-    if (zoom > 1) { resetZoom(); return; }
-    const rect = DOM.lbImgWrap.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    updateZoom(2, cx, cy);
-  });
+        // Double-click to zoom
+        DOM.lbImgWrap.addEventListener("dblclick", function (e) {
+          if (zoom > 1) {
+            resetZoom();
+            return;
+          }
+          const rect = DOM.lbImgWrap.getBoundingClientRect();
+          const cx = e.clientX - rect.left;
+          const cy = e.clientY - rect.top;
+          updateZoom(2, cx, cy);
+        });
 
-  document.addEventListener('keydown', function(e) {
-    if (!DOM.lightbox.classList.contains('open')) return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft') prevImage();
-    if (e.key === 'ArrowRight') nextImage();
-  });
+        document.addEventListener("keydown", function (e) {
+          if (!DOM.lightbox.classList.contains("open")) return;
+          if (e.key === "Escape") closeLightbox();
+          if (e.key === "ArrowLeft") prevImage();
+          if (e.key === "ArrowRight") nextImage();
+        });
 
-  // ======================== Dropdown actions =======================
+        // ======================== Dropdown actions =======================
 
-  document.querySelectorAll('[data-action]').forEach(el => {
-    el.addEventListener('click', function() {
-      const action = this.dataset.action;
-      closeDropdown();
-      switch (action) {
-        case 'folder': DOM.folderInput.click(); break;
-        case 'github': openGitHubPanel(); break;
-        case 'save': openSavePanel(); break;
-        case 'manage': openPresetManager(); break;
-      }
-    });
-  });
+        document.querySelectorAll("[data-action]").forEach((el) => {
+          el.addEventListener("click", function () {
+            const action = this.dataset.action;
+            closeDropdown();
+            switch (action) {
+              case "folder":
+                DOM.folderInput.click();
+                break;
+              case "github":
+                openGitHubPanel();
+                break;
+              case "save":
+                openSavePanel();
+                break;
+              case "manage":
+                openPresetManager();
+                break;
+            }
+          });
+        });
 
-  // ========================= Drag & drop ===========================
+        // ========================= Drag & drop ===========================
 
-  document.addEventListener('dragover', function(e) { e.preventDefault(); });
-  document.addEventListener('drop', function(e) {
-    e.preventDefault();
-    const items = e.dataTransfer.items;
-    if (!items) return;
-    for (const item of items) {
-      if (item.webkitGetAsEntry && item.webkitGetAsEntry().isDirectory) {
-        DOM.folderInput.files = e.dataTransfer.files;
-        DOM.folderInput.dispatchEvent(new Event('change'));
-        return;
-      }
-    }
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-    if (files.length) {
-      currentPresetId = null;
-      lastGithubConfig = null;
-      DOM.presetLabel.innerHTML = '<i class="fa-solid fa-folder"></i> 拖拽文件';
-      loadFolderFiles(files);
-    }
-  });
+        document.addEventListener("dragover", function (e) {
+          e.preventDefault();
+        });
+        document.addEventListener("drop", function (e) {
+          e.preventDefault();
+          const items = e.dataTransfer.items;
+          if (!items) return;
+          for (const item of items) {
+            if (item.webkitGetAsEntry && item.webkitGetAsEntry().isDirectory) {
+              DOM.folderInput.files = e.dataTransfer.files;
+              DOM.folderInput.dispatchEvent(new Event("change"));
+              return;
+            }
+          }
+          const files = Array.from(e.dataTransfer.files).filter((f) =>
+            f.type.startsWith("image/"),
+          );
+          if (files.length) {
+            currentPresetId = null;
+            lastGithubConfig = null;
+            DOM.presetLabel.innerHTML =
+              '<i class="fa-solid fa-folder"></i> 拖拽文件';
+            loadFolderFiles(files);
+          }
+        });
 
-  // =========================== Init ================================
+        // =========================== Init ================================
 
-  renderPresetDropdown();
-
-})();
-</script>
-
-</body>
+        renderPresetDropdown();
+      })();
+    </script>
+  </body>
 </html>

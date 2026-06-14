@@ -11,6 +11,11 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     />
+    <script
+      defer
+      src="https://u.mikufans1.dpdns.org/script.js"
+      data-website-id="ce603ea7-0617-41cb-95fe-493154cc18a3"
+    ></script>
     <style>
       * {
         box-sizing: border-box;
@@ -74,24 +79,24 @@
         align-items: stretch;
       }
 
-    .desktop-left {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
+      .desktop-left {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
 
-    .desktop-left .glass-strong {
-      margin-top: auto;
-    }
+      .desktop-left .glass-strong {
+        margin-top: auto;
+      }
 
-    .desktop-right {
-      flex: 0 0 340px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      justify-content: flex-end;
-    }
+      .desktop-right {
+        flex: 0 0 340px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        justify-content: flex-end;
+      }
 
       .site-title {
         font-size: 2rem;
@@ -542,7 +547,9 @@
         <!-- Left - 小工具 -->
         <div class="desktop-left">
           <div class="glass-strong">
-            <div class="tools-header"><i class="fa-solid fa-toolbox"></i> 小工具</div>
+            <div class="tools-header">
+              <i class="fa-solid fa-toolbox"></i> 小工具
+            </div>
             <div class="tools-grid" id="desktop-tools"></div>
           </div>
         </div>
@@ -565,14 +572,28 @@
             <div id="cst-display" class="time-display">
               <div class="utc-time" id="cst-time">00:00</div>
             </div>
-            <span class="timezone-switch" onclick="cycleTimezone()">⌄ 切换时区</span>
+            <span class="timezone-switch" onclick="cycleTimezone()"
+              >⌄ 切换时区</span
+            >
           </div>
 
           <div class="glass about-card">
             <h2>关于本站</h2>
-            <p>这是 <strong>lm-xiao-fen</strong> 的个人副站，用于放置一些<strong>小工具 / 实验页面 / 临时项目</strong>。</p>
-            <p>本站不依赖任何框架，使用原生 <strong>HTML + CSS + JavaScript</strong> 构建，主要用于练习与功能展示。</p>
-            <p>正式博客与技术文章请访问：<a href="https://xfcnl.github.io">主站 xf_blog</a>。</p>
+            <p>
+              这是 <strong>lm-xiao-fen</strong> 的个人副站，用于放置一些<strong
+                >小工具 / 实验页面 / 临时项目</strong
+              >。
+            </p>
+            <p>
+              本站不依赖任何框架，使用原生
+              <strong>HTML + CSS + JavaScript</strong>
+              构建，主要用于练习与功能展示。
+            </p>
+            <p>
+              正式博客与技术文章请访问：<a href="https://xfcnl.github.io"
+                >主站 xf_blog</a
+              >。
+            </p>
           </div>
         </div>
       </div>
@@ -648,7 +669,9 @@
               padding: 20px;
             "
           >
-            <div class="tools-header"><i class="fa-solid fa-toolbox"></i> 小工具</div>
+            <div class="tools-header">
+              <i class="fa-solid fa-toolbox"></i> 小工具
+            </div>
             <div class="tools-grid" id="mobile-tools"></div>
           </div>
         </div>
