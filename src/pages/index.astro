@@ -1,0 +1,235 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+---
+
+<BaseLayout title="xf_blog — lm-xiao-fen">
+  <slot name="head" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1e1e2e;
+      --surface: #181825;
+      --surface-alt: #11111b;
+      --text: #cdd6f4;
+      --text-dim: #6c7086;
+      --green: #a6e3a1;
+      --cyan: #89dceb;
+      --yellow: #f9e2af;
+      --red: #f38ba8;
+      --blue: #89b4fa;
+      --mauve: #cba6f7;
+      --border: #313244;
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .terminal {
+      width: 100%;
+      max-width: 820px;
+      height: min(85vh, 680px);
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 64px rgba(0,0,0,0.5);
+    }
+
+    .terminal-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--surface-alt);
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .titlebar-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .titlebar-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .titlebar-dot.red { background: #f38ba8; }
+    .titlebar-dot.yellow { background: #f9e2af; }
+    .titlebar-dot.green { background: #a6e3a1; }
+
+    .titlebar-text {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-left: 8px;
+      font-weight: 500;
+    }
+
+    .terminal-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .terminal-output::-webkit-scrollbar {
+      width: 6px;
+    }
+    .terminal-output::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .terminal-output::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .terminal-line {
+      min-height: 1.6em;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+    .prompt { color: var(--green); }
+    .prompt-path { color: var(--blue); }
+
+    .cmd-text { color: var(--text); }
+
+    .ansi-green { color: var(--green); }
+    .ansi-cyan { color: var(--cyan); }
+    .ansi-yellow { color: var(--yellow); }
+    .ansi-red { color: var(--red); }
+    .ansi-blue { color: var(--blue); }
+    .ansi-mauve { color: var(--mauve); }
+    .ansi-bold { font-weight: 700; }
+    .ansi-bold-cyan { color: var(--cyan); font-weight: 700; }
+    .ansi-dim { color: var(--text-dim); }
+    .ansi-underline-cyan { color: var(--cyan); text-decoration: underline; }
+
+    .terminal-input-line {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px 16px;
+      gap: 0;
+      position: relative;
+    }
+
+    .prompt-static {
+      color: var(--green);
+      font-size: 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .prompt-static .prompt-path {
+      color: var(--blue);
+    }
+
+    .input-display {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1;
+      color: var(--text);
+      position: relative;
+      min-height: 1.2em;
+    }
+
+    .hidden-input {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 0;
+      height: 0;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+      opacity: 0;
+      z-index: -1;
+    }
+
+    .input-display {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1;
+      color: var(--text);
+      position: relative;
+      min-height: 1.2em;
+      cursor: text;
+    }
+
+    .cursor-blink {
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .boot-line {
+      color: var(--text-dim);
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 8px; }
+      .terminal {
+        height: calc(100vh - 16px);
+        border-radius: 8px;
+        max-width: 100%;
+      }
+      .terminal-output {
+        padding: 12px;
+        font-size: 13px;
+      }
+      .terminal-input-line {
+        padding: 6px 12px 12px;
+      }
+      .titlebar-text {
+        font-size: 11px;
+      }
+    }
+  </style>
+
+  <div class="terminal">
+    <div class="terminal-titlebar">
+      <div class="titlebar-dots">
+        <span class="titlebar-dot red"></span>
+        <span class="titlebar-dot yellow"></span>
+        <span class="titlebar-dot green"></span>
+      </div>
+      <span class="titlebar-text">guest@xf_blog: — Term</span>
+    </div>
+
+    <div class="terminal-output" id="terminal-output"></div>
+
+    <div class="terminal-input-line">
+      <span class="prompt-static" id="prompt">guest@xf_blog:<span class="prompt-path">~</span>$</span>
+      <div class="input-display" id="input-display">
+        <span class="cursor-blink">█</span>
+      </div>
+      <input type="text" id="terminal-input" class="hidden-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    </div>
+  </div>
+
+  <script>
+    import '../scripts/terminal'
+  </script>
+</BaseLayout>

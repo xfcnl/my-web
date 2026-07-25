@@ -1,0 +1,560 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import config from '../config/gallery-config.json'
+const { ui } = config
+---
+
+<BaseLayout title={config.title}>
+  <slot name="head" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.18);
+      --glass-border: rgba(255, 255, 255, 0.25);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --text: #1d1d1f;
+      --text-secondary: rgba(0, 0, 0, 0.5);
+      --overlay: rgba(0, 0, 0, 0.6);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --font: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+      --bg-color: #f5f5f7;
+      --bg-image: none;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg-color);
+      background-image: var(--bg-image);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.4s;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .header {
+      position: sticky;
+      top: 16px;
+      z-index: 100;
+      margin: 16px 16px 0;
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 50px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text);
+      font-family: var(--font);
+      white-space: nowrap;
+    }
+    .btn:hover {
+      background: rgba(255,255,255,0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .btn:active { transform: translateY(0); }
+
+    .preset-wrap { position: relative; }
+    .preset-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px 8px 16px;
+      border-radius: 50px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text);
+      font-family: var(--font);
+      white-space: nowrap;
+      max-width: 180px;
+    }
+    .preset-trigger:hover {
+      background: rgba(255,255,255,0.5);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .preset-trigger .arrow {
+      display: inline-flex;
+      align-items: center;
+      opacity: 0.5;
+      transition: transform 0.25s;
+      font-size: 14px;
+    }
+    .preset-trigger.open .arrow { transform: rotate(180deg); }
+    .preset-trigger .label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preset-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 240px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(40px) saturate(1.5);
+      -webkit-backdrop-filter: blur(40px) saturate(1.5);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.12);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px) scale(0.96);
+      transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+      z-index: 200;
+    }
+    .preset-dropdown.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    .opt-group-label {
+      padding: 10px 14px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.4;
+    }
+    .opt-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      border: none;
+      background: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      color: var(--text);
+      font-family: var(--font);
+      transition: background 0.2s;
+    }
+    .opt-item:hover { background: rgba(0,0,0,0.06); }
+    .opt-item .icon { width: 24px; text-align: center; font-size: 15px; opacity: 0.6;}
+    .opt-item .badge { margin-left: auto; font-size: 11px; font-weight: 500; opacity: 0.4; white-space: nowrap; }
+    .divider { height: 1px; background: rgba(0,0,0,0.08); margin: 4px 0; }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 16px;
+    }
+    .gallery-item {
+      aspect-ratio: 1;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s;
+      position: relative;
+      background: rgba(0,0,0,0.04);
+    }
+    .gallery-item:hover { transform: scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .footer {
+      margin: 0 16px 16px;
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      padding: 10px 24px;
+      border-radius: 50px;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 500;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (min-width: 768px) {
+      .gallery { grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px; }
+      .header { margin: 24px 24px 0; padding: 16px 24px; }
+      .header-title { font-size: 22px; }
+      .footer { margin: 0 24px 24px; }
+      .preset-trigger { max-width: 260px; }
+    }
+    @media (min-width: 1200px) {
+      .gallery { padding: 32px; }
+      .header { margin: 32px 32px 0; }
+      .footer { margin: 0 32px 32px; }
+    }
+
+    .skeleton {
+      background: linear-gradient(110deg, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0.08) 70%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s ease-in-out infinite;
+      border-radius: var(--radius-sm);
+      aspect-ratio: 1;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    .overlay {
+      position: fixed; inset: 0;
+      background: var(--overlay);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.35s;
+    }
+    .overlay.open { opacity: 1; pointer-events: auto; }
+
+    .panel {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0.92);
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(40px) saturate(1.5);
+      -webkit-backdrop-filter: blur(40px) saturate(1.5);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      z-index: 300;
+      opacity: 0; pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
+    }
+    .panel.open { opacity: 1; pointer-events: auto; transform: translate(-50%,-50%) scale(1); }
+    .panel h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .panel label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.5; margin-bottom: 6px; }
+    .panel input, .panel select {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.1); font-size: 14px; font-family: var(--font);
+      background: rgba(255,255,255,0.5); color: var(--text); outline: none;
+      transition: border-color 0.2s; margin-bottom: 10px;
+    }
+    .panel input:focus, .panel select:focus { border-color: rgba(0,0,0,0.25); }
+    .panel .hint { font-size: 11px; opacity: 0.4; margin: -4px 0 10px; }
+    .bg-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+
+    .preset-list { max-height: 300px; overflow-y: auto; }
+    .preset-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .preset-list-item .p-info { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .preset-list-item .p-icon { width: 20px; text-align: center; opacity: 0.5; }
+    .preset-list-item .p-name { font-weight: 500; }
+    .preset-list-item .p-count { font-size: 11px; opacity: 0.4; }
+    .preset-list-item .p-lock { opacity: 0.3; font-size: 12px; }
+    .p-del {
+      background: none; border: none; cursor: pointer; color: var(--text);
+      opacity: 0.3; padding: 4px 8px; border-radius: 6px; transition: all 0.2s;
+    }
+    .p-del:hover { opacity: 0.8; background: rgba(0,0,0,0.06); color: #e74c3c; }
+
+    .lightbox {
+      position: fixed; inset: 0; z-index: 400;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.35s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: auto; }
+    .lightbox-bg {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .lightbox-close {
+      position: absolute; top: 16px; right: 16px; z-index: 10;
+      background: rgba(255,255,255,0.1); border: none; color: #fff;
+      width: 40px; height: 40px; border-radius: 50%; font-size: 22px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; backdrop-filter: blur(8px);
+    }
+    .lightbox-close:hover { background: rgba(255,255,255,0.2); }
+    .lightbox-nav {
+      position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+      background: rgba(255,255,255,0.08); border: none; color: #fff;
+      width: 44px; height: 44px; border-radius: 50%; font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; backdrop-filter: blur(8px);
+    }
+    .lightbox-nav:hover { background: rgba(255,255,255,0.18); }
+    .lightbox-nav.prev { left: 16px; }
+    .lightbox-nav.next { right: 16px; }
+    .lightbox-content {
+      position: relative; z-index: 5;
+      display: flex; flex-direction: column; align-items: center;
+      max-width: 90vw; max-height: 85vh;
+    }
+    .lightbox-img-wrap {
+      max-width: 100%; max-height: 80vh; overflow: hidden;
+      border-radius: 8px; cursor: default;
+    }
+    .lightbox-img-wrap.dragging { cursor: grabbing; }
+    .lightbox-img-wrap img {
+      max-width: 100%; max-height: 80vh; display: block;
+      transition: transform 0.2s; user-select: none; -webkit-user-drag: none;
+    }
+    .lightbox-img-wrap img.no-anim { transition: none; }
+    .lightbox-caption { margin-top: 12px; font-size: 14px; color: rgba(255,255,255,0.6); text-align: center; }
+    .lightbox-zoom { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .lightbox-zoom button {
+      background: rgba(255,255,255,0.1); border: none; color: #fff;
+      width: 34px; height: 34px; border-radius: 50%; font-size: 14px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .lightbox-zoom button:hover { background: rgba(255,255,255,0.25); }
+    .zoom-level { min-width: 36px; text-align: center; font-size: 13px; color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; }
+
+    .home-btn {
+      position: fixed; bottom: 24px; left: 24px; z-index: 999;
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 50px;
+      background: rgba(255,255,255,0.2); backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text); font-size: 14px; font-weight: 500;
+      text-decoration: none; transition: all 0.25s;
+      font-family: var(--font);
+    }
+    .home-btn:hover { background: rgba(255,255,255,0.35); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  </style>
+
+  <header class="header glass">
+    <a href="/" class="header-title" style="text-decoration: none; color: inherit">
+      <i class="fa-regular fa-image" style="font-size: 18px"></i>
+      {config.title}
+    </a>
+    <div class="header-controls">
+      <div class="preset-wrap">
+        <button class="preset-trigger" id="presetTrigger">
+          <span class="label" id="presetLabel">选择来源</span>
+          <span class="arrow"><i class="fa-solid fa-chevron-down"></i></span>
+        </button>
+        <div class="preset-dropdown" id="presetDropdown">
+          <div class="opt-group-label">预设</div>
+          <div id="presetList"></div>
+          <div class="divider"></div>
+          <button class="opt-item" data-action="folder">
+            <span class="icon"><i class="fa-solid fa-folder"></i></span>
+            选择文件夹…
+          </button>
+          <button class="opt-item" data-action="github">
+            <span class="icon"><i class="fa-brands fa-github"></i></span>
+            GitHub 仓库…
+          </button>
+          <button class="opt-item" data-action="save">
+            <span class="icon"><i class="fa-solid fa-floppy-disk"></i></span>
+            保存为预设
+          </button>
+          <button class="opt-item" data-action="manage">
+            <span class="icon"><i class="fa-solid fa-gear"></i></span>
+            管理预设
+          </button>
+        </div>
+      </div>
+      <button class="btn" id="bgBtn" title="自定义背景">
+        <i class="fa-solid fa-palette" style="font-size: 16px"></i>
+        <span>背景</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="gallery" id="gallery" style="grid-template-columns: repeat({ui.columnsDesktop > 3 ? 4 : ui.columnsDesktop}, 1fr)">
+    <div class="empty-state">
+      <i class="fa-regular fa-image" style="font-size: 48px; opacity: 0.3"></i>
+      <p>选择预设或文件夹以加载图片</p>
+    </div>
+  </div>
+
+  <footer class="footer glass">
+    <span id="countInfo">尚未加载图片</span>
+  </footer>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="panel glass" id="bgPanel">
+    <h3><i class="fa-solid fa-palette"></i> 自定义背景</h3>
+    <label>纯色背景</label>
+    <input type="color" id="colorPicker" value="#f5f5f7" />
+    <label style="margin-top: 12px; display: block">图片背景</label>
+    <input type="file" id="bgImageInput" accept="image/*" />
+    <div class="bg-row">
+      <button class="btn" id="resetBgBtn">重置</button>
+      <button class="btn" id="closeBgBtn">完成</button>
+    </div>
+  </div>
+
+  <div class="panel glass" id="githubPanel">
+    <h3><i class="fa-brands fa-github"></i> GitHub 仓库</h3>
+    <label>仓库地址</label>
+    <input type="text" id="ghRepo" placeholder="owner/repo" spellcheck="false"/>
+    <label>分支</label>
+    <input type="text" id="ghBranch" placeholder="main" value="main" spellcheck="false"/>
+    <label>路径 (可选)</label>
+    <input type="text" id="ghPath" placeholder="path/to/images" spellcheck="false"/>
+    <label>Token (可选，提升频率限制)</label>
+    <input type="password" id="ghToken" placeholder="ghp_..." spellcheck="false"/>
+    <div class="hint">未提供 Token 时，未认证用户每小时限 60 次请求</div>
+    <label>图片源</label>
+    <select id="ghRawService">
+      <option value="raw.githubusercontent.com">raw.githubusercontent.com</option>
+      <option value="raw.gh.1s.fan">raw.gh.1s.fan</option>
+      <option value="jsdelivr">cdn.jsdelivr.net (gh)</option>
+    </select>
+    <div class="bg-row">
+      <button class="btn" id="cancelGhBtn">取消</button>
+      <button class="btn" id="fetchGhBtn" style="background: rgba(0,0,0,0.08)">获取并加载</button>
+    </div>
+  </div>
+
+  <div class="panel glass" id="presetPanel">
+    <h3><i class="fa-solid fa-gear"></i> 管理预设</h3>
+    <div class="preset-list" id="presetListPanel"></div>
+    <div class="bg-row">
+      <button class="btn" id="closePresetPanelBtn">完成</button>
+    </div>
+  </div>
+
+  <div class="panel glass" id="savePanel">
+    <h3><i class="fa-solid fa-floppy-disk"></i> 保存为预设</h3>
+    <label>预设名称</label>
+    <input type="text" id="presetNameInput" placeholder="输入名称..." maxlength="30"/>
+    <label>保存类型</label>
+    <select id="saveTypeSelect">
+      <option value="urls">图片 URL 列表</option>
+      <option value="github">GitHub 仓库配置（可刷新）</option>
+    </select>
+    <div class="hint" id="saveTypeHint">保存当前所有图片的 URL</div>
+    <div class="bg-row">
+      <button class="btn" id="cancelSaveBtn">取消</button>
+      <button class="btn" id="confirmSaveBtn">保存</button>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-bg" id="lightboxBg"></div>
+    <button class="lightbox-close" id="lbClose"><i class="fa-solid fa-xmark"></i></button>
+    <button class="lightbox-nav prev" id="lbPrev"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="lightbox-nav next" id="lbNext"><i class="fa-solid fa-chevron-right"></i></button>
+    <div class="lightbox-content">
+      <div class="lightbox-img-wrap" id="lbImgWrap">
+        <img id="lbImg" src="" alt="" />
+      </div>
+      <div class="lightbox-caption" id="lbCaption"></div>
+      <div class="lightbox-zoom" id="lbZoom">
+        <button id="zoomOut" title="缩小"><i class="fa-solid fa-minus"></i></button>
+        <span class="zoom-level" id="zoomLevel">1×</span>
+        <button id="zoomIn" title="放大"><i class="fa-solid fa-plus"></i></button>
+        <button id="zoomReset" title="重置"><i class="fa-solid fa-expand"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <input type="file" id="folderInput" webkitdirectory multiple accept="image/*" style="display:none"/>
+
+  <a href="/" class="home-btn"><i class="fa-solid fa-house"></i> 回到主页</a>
+
+  <script>
+    import '../scripts/gallery/index'
+  </script>
+</BaseLayout>

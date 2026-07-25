@@ -1,0 +1,55 @@
+{
+  "title": "画廊",
+  "presets": [
+    {
+      "name": "网络图片示例",
+      "images": [
+        "https://picsum.photos/seed/nat1/600/600",
+        "https://picsum.photos/seed/nat2/600/600",
+        "https://picsum.photos/seed/nat3/600/600",
+        "https://picsum.photos/seed/nat4/600/600",
+        "https://picsum.photos/seed/nat5/600/600",
+        "https://picsum.photos/seed/nat6/600/600",
+        "https://picsum.photos/seed/nat7/600/600",
+        "https://picsum.photos/seed/nat8/600/600",
+        "https://picsum.photos/seed/arch1/600/600",
+        "https://picsum.photos/seed/arch2/600/600",
+        "https://picsum.photos/seed/arch3/600/600",
+        "https://picsum.photos/seed/arch4/600/600",
+        "https://picsum.photos/seed/arch5/600/600",
+        "https://picsum.photos/seed/arch6/600/600",
+        "https://picsum.photos/seed/arch7/600/600",
+        "https://picsum.photos/seed/arch8/600/600",
+        "https://picsum.photos/seed/abs1/600/600",
+        "https://picsum.photos/seed/abs2/600/600",
+        "https://picsum.photos/seed/abs3/600/600",
+        "https://picsum.photos/seed/abs4/600/600",
+        "https://picsum.photos/seed/abs5/600/600",
+        "https://picsum.photos/seed/abs6/600/600",
+        "https://picsum.photos/seed/abs7/600/600",
+        "https://picsum.photos/seed/abs8/600/600"
+      ]
+    },
+    {
+      "name": "Cute-Dress/Dress",
+      "type": "github",
+      "owner": "Cute-Dress",
+      "repo": "Dress",
+      "branch": "master",
+      "path": ""
+    }
+  ],
+  "defaultPreset": null,
+  "ui": {
+    "columnsDesktop": 4,
+    "columnsMobile": 2,
+    "skeletonCount": 12,
+    "toastDuration": 2000
+  },
+  "background": {
+    "color": "#f5f5f7"
+  },
+  "githubDefaults": {
+    "rawService": "raw.githubusercontent.com"
+  }
+}
